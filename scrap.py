@@ -1,16 +1,8 @@
-a = [1, 2, 4, 6, 34, 7]
-b = [1, 3, 2, 4, 87]
-
-
-class Test():
-
-    def __init__(self):
-        self.a, self.b = self.test1()
-
-    def test1(self):
-        return (3, 5)
 
 
 
-x = Test()
-print(x.b)
+def draw_random_sample(R, k, S):            #Generates k random tuples, will ger replaced by random sample of table function later
+    sample = []
+    for i in range(100):
+        sample.append((random.randint(0, 100), random.randint(0, 1000), random.randint(0, 1000), i, S))         #(age, loc_x, loc_y, name, 0 for S, 1 for T
+    return sample
