@@ -21,6 +21,7 @@ class Partition():          #tuple structure: the join necessary dimensions at t
         self.__output_size = len(sample_output)
         self.bestSplit, self.topScore = self.bestSplit()
         self.A = A      #e.g. A = [(20, 30), (1031, 1300), (742, 935)] age 20-30, x_loc 1031-1300, y_loc 742-935
+        self.topScore = 0
 
     def best_split(self, partitions, w):
         bestSplit = None
@@ -46,7 +47,9 @@ class Partition():          #tuple structure: the join necessary dimensions at t
         return (bestSplit, topScore)
 
     def apply_best_split(self):
-        return
+        p_new_1 = 2     #return newly formed partitions
+        p_new_2 = 1
+        return p_new_1, p_new_2
 
     def get_input_size(self):
         return self.__input_size
@@ -54,6 +57,8 @@ class Partition():          #tuple structure: the join necessary dimensions at t
     def get_output_size(self):
         return self.__output_size
 
+    def get_topScore(self):
+        return self.topScore
 
 def compute_output(S, T, condition):
     pass
@@ -69,8 +74,14 @@ def draw_random_sample(R, k, S):            #Generates k random tuples, will ger
 def split_score(partitions, w, pa): #w = number of workers, p = partition,
 
 
-
-
+def find_top_score_partition(partitions):
+    top_score_partition = None
+    score = 0
+    for p in partitions:
+        if p.get_topScore() > score:
+            score = p.get_topScore()
+            top_score_partition = p
+    return p
 def recPart(dim, S, T, condition, k):               #condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
     random_sample_S = draw_random_sample(S, k/2, 0)
     random_sample_T = draw_random_sample(T, k/2, 1)
@@ -79,4 +90,11 @@ def recPart(dim, S, T, condition, k):               #condition = epsilon for eac
     A = [(0, 100), (0, 1000), (0, 1000)]  #because our random samples have values in between
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
-    pass
+    termination_condition = True
+    while termination_condition:
+        p_max = find_top_score_partition(partitions)
+        p_new_1, p_new_2 = p_max.apply_best_split()
+        p_new_1.best_split(partitions, w)
+        p_new_2.best_split(partitions, w)
+
+    return partitions
