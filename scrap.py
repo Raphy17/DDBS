@@ -39,7 +39,8 @@ def best_split(partitions, w, a, dimensions):
         score_best_x = 0
         a.sort(key=lambda x: x[dim])  # sort input_sample on dimension A
 
-        for i in range(0, len(a) - 2):  # find best split a single dimension
+        for i in range(0, len(a) - 1):  # find best split a single dimension
+            print(i)
             x = (a[i][dim] + a[i + 1][dim]) / 2
             delta_var_x = 1000 #ask on monday
             delta_dup_x = find_dupl(a, i, 5, dim)
