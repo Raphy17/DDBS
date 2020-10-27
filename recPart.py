@@ -1,10 +1,11 @@
 import random
 
+
 def load(input_size, output_size, b2, b3):
     return b2*input_size+b3*output_size
 
 
-def per_worker_load_Variance(partitions, w):    #uses for beta 2, beta 3: (4, 1) (like in amazon cloud cluster)
+def per_worker_load_variance(partitions, w):    #uses for beta 2, beta 3: (4, 1) (like in amazon cloud cluster)
     Vp = (w - 1) / w**2
     tmp = 0
     for p in partitions:
@@ -17,6 +18,7 @@ def per_worker_load_Variance(partitions, w):    #uses for beta 2, beta 3: (4, 1)
 def compute_output(S, T, condition):
     return S
 
+
 def find_dupl(a, i, band, dim):
     dupl = 0
     v_i_plus_1 = a[i+1][dim]
@@ -26,7 +28,7 @@ def find_dupl(a, i, band, dim):
         if v_i_plus_1 - a[j][dim] > band:
             break
 
-        if a[j][-1] == 1:  #1 tuple belongs to sample T, 0 tuple belong to sample S
+        if a[j][-1] == 1:  # 1 tuple belongs to sample T, 0 tuple belong to sample S
             dupl += 1
         j -= 1
 
@@ -34,21 +36,21 @@ def find_dupl(a, i, band, dim):
     while j <= len(a) -1:
         if a[j][dim] - v_i > band:
             break
-        if a[j][-1] == 1:  #1 tuple belongs to sample T, 0 tuple belong to sample S
+        if a[j][-1] == 1:  # 1 tuple belongs to sample T, 0 tuple belong to sample S
             dupl += 1
         j += 1
 
     return dupl
 
 
-class Partition():          #tuple structure: the join necessary dimensions at the front and table/sample membership(either S/T) at the end e.g. join on age, loc_x, loc_y --> tuple (age, lox_x, loc_y, name, bla, bla, S/T)
+class Partition():          # tuple structure: the join necessary dimensions at the front and table/sample membership(either S/T) at the end e.g. join on age, loc_x, loc_y --> tuple (age, lox_x, loc_y, name, bla, bla, S/T)
 
     def __init__(self, A, sample_S, sample_T, sample_output):
         self.sample_S = sample_S
         self.sample_T = sample_T
         self.sample_input = sample_S.copy() + sample_T.copy()
         self.sample_output = sample_output      #gets calculated
-        self.A = A      #e.g. A = [(20, 30), (1031, 1300), (742, 935)] age 20-30, x_loc 1031-1300, y_loc 742-935
+        self.A = A      # e.g. A = [(20, 30), (1031, 1300), (742, 935)] age 20-30, x_loc 1031-1300, y_loc 742-935
         self.top_score = None
         self.best_split = None
         self.dim_best_split = None
@@ -61,14 +63,14 @@ class Partition():          #tuple structure: the join necessary dimensions at t
         best_split = None
         top_score = 0
         dim_best_split = 0
-        Vp = per_worker_load_Variance(partitions, w) #before applying partitioning
-        for dim in range(len(self.A)):       #find best split out of all dimensions
+        Vp = per_worker_load_variance(partitions, w) # before applying partitioning
+        for dim in range(len(self.A)):       # find best split out of all dimensions
             best_x = 0
             score_best_x = 0
-            self.sample_input.sort(key=lambda x:x[dim])    #sort input_sample on dimension A
-            for i in range(0, len(self.sample_input)-1):    #find best split a single dimension
+            self.sample_input.sort(key=lambda x:x[dim])    # sort input_sample on dimension A
+            for i in range(0, len(self.sample_input)-1):    # find best split a single dimension
                 x = (self.sample_input[i][dim] + self.sample_input[i+1][dim])/2     #
-                delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)  #replace 5 with conditio
+                delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)  # replace 5 with conditio
                 Vp_new = Vp - (w-1)/w**2 * (load(self.get_input_size(), self.get_output_size(), 4, 1)**2)
                 Vp_new += (w-1)/w**2 * (load(1+i+delta_dup_x, 1+i+delta_dup_x, 4, 1)**2 + load(len(self.sample_input)-1-i+delta_dup_x, len(self.sample_input)-1-i+delta_dup_x, 4, 1)**2)
                 delta_var_x = Vp - Vp_new
@@ -88,8 +90,7 @@ class Partition():          #tuple structure: the join necessary dimensions at t
 
         return best_split, top_score, dim_best_split
 
-
-    def apply_best_split(self, band_condition):   #we only copy T
+    def apply_best_split(self, band_condition):   # we only copy T
         self.sample_S.sort(key=lambda x: x[self.dim_best_split])
         self.sample_T.sort(key=lambda x: x[self.dim_best_split])
 
@@ -102,13 +103,12 @@ class Partition():          #tuple structure: the join necessary dimensions at t
                 p_new_1_sample_S.append(self.sample_S[i])
             else:
                 p_new_2_sample_S.append(self.sample_S[i])
-        #now ad all duplicates but only duplicatre relation T
-
+        # now ad all duplicates but only duplicatre relation T
 
         biggest_S_tuple_in_p_new_1 = p_new_1_sample_S[-1]
         smallest_S_tuple_in_p_new_2 = p_new_2_sample_S[0]
 
-        #now add all the tuple Int + tuple in band that belong to T
+        # now add all the tuple Int + tuple in band that belong to T
         for tuple in self.sample_T:
             if tuple[self.dim_best_split] <= biggest_S_tuple_in_p_new_1[self.dim_best_split] + band_condition[self.dim_best_split]:
                 p_new_1_sample_T.append(tuple)
@@ -142,18 +142,19 @@ class Partition():          #tuple structure: the join necessary dimensions at t
     def get_best_split(self):
         return self.best_split
 
-def compute_output(S, T, condition):
+
+def compute_output(S, T, band_conditions):
     return S
 
 
-def draw_random_sample(R, k, S):            #Generates k random tuples, will ger replaced by random sample of table function later
+def draw_random_sample(R, k, S):  # Generates k random tuples, gets replaced by random sample of table function later
     sample = []
-    for i in range(k):
-        sample.append((random.randint(0, 100), random.randint(0, 1000), random.randint(0, 1000), i, S))         #(age, loc_x, loc_y, name, 0 for S, 1 for T
+    for i in range(k):   # (age, loc_x, loc_y, name, 0 for S, 1 for T
+        sample.append((random.randint(0, 100), random.randint(0, 1000), random.randint(0, 1000), i, S))
     return sample
 
 
-def find_top_score_partition(partitions):
+def find_top_score_partition(partitions):       # should get changed to priority queue but is fast enough to n ot matter
     top_score_partition = None
     score = 0
     for p in partitions:
@@ -163,16 +164,15 @@ def find_top_score_partition(partitions):
     return top_score_partition
 
 
-def recPart(dim, S, T, band_condition, k, w):               #condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
-    random_sample_S = draw_random_sample(S, k//2, 0)
+def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
+    random_sample_S = draw_random_sample(S, k//2, 0)        #
     random_sample_T = draw_random_sample(T, k//2, 1)
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
-    partitions = []         #all partitions
-    A = [(0, 100), (0, 1000)]  #because our random samples have values in between these domains
+    partitions = []         # all partitions
+    A = [(0, 100), (0, 1000)]  # because our random samples have values in between these domains
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
-
 
     termination_condition = True
     i = 0
@@ -189,6 +189,7 @@ def recPart(dim, S, T, band_condition, k, w):               #condition = epsilon
             break
     return partitions
 
-parts = recPart(2, 2, 2, [5, 50], 100, 10)
+
+parts = recPart(2, 2, [5, 50], 100, 10)
 print(parts)
 
