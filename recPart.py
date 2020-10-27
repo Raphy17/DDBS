@@ -104,6 +104,7 @@ class Partition():          #tuple structure: the join necessary dimensions at t
                 p_new_2_sample_S.append(self.sample_S[i])
         #now ad all duplicates but only duplicatre relation T
 
+
         biggest_S_tuple_in_p_new_1 = p_new_1_sample_S[-1]
         smallest_S_tuple_in_p_new_2 = p_new_2_sample_S[0]
 
@@ -116,13 +117,10 @@ class Partition():          #tuple structure: the join necessary dimensions at t
 
 
 
-        p_new_1_max = max(p_new_1_sample_S[-1][self.dim_best_split], p_new_1_sample_T[-1][self.dim_best_split])
-        p_new_2_min = min(p_new_2_sample_S[0][self.dim_best_split], p_new_2_sample_T[0][self.dim_best_split])
-
         p_new_1_A = self.A.copy()
-        p_new_1_A[self.dim_best_split] = (self.A[self.dim_best_split][0], p_new_1_max)
+        p_new_1_A[self.dim_best_split] = (self.A[self.dim_best_split][0], self.best_split)
         p_new_2_A = self.A.copy()
-        p_new_2_A[self.dim_best_split] = (p_new_2_min, self.A[self.dim_best_split][1])
+        p_new_2_A[self.dim_best_split] = (self.best_split, self.A[self.dim_best_split][1])
 
         p_new_1_sample_output = compute_output(p_new_1_sample_S, p_new_1_sample_T, band_condition)
 
@@ -187,10 +185,10 @@ def recPart(dim, S, T, band_condition, k, w):               #condition = epsilon
         partitions.append(p_new_1)
         partitions.append(p_new_2)
         i += 1
-        print(partitions)
         if i == 5:
             break
     return partitions
 
 parts = recPart(2, 2, 2, [5, 50], 100, 10)
+print(parts)
 
