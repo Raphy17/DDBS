@@ -1,11 +1,4 @@
 import random
-import pandas as pd
-from math import pi
-import numpy as np
-from bokeh.io import output_file, show, save
-from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Line, HoverTool, FactorRange
-import bokeh.palettes as bp
 
 
 def load(input_size, output_size, b2, b3):
@@ -195,10 +188,6 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         if i == 5:
             break
     return partitions
-
-# input: list with lists
-def plot_partitions(partitions):
-
 
 
 parts = recPart(2, 2, [5, 50], 100, 10)
