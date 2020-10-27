@@ -1,0 +1,11 @@
+name: bokeh-tutorial
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pandas
+  - bokeh=2.2.1
+  - jupyter
+prefix: D:\Programming\anaconda\envs\bokeh-tutorial
+
