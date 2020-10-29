@@ -159,7 +159,7 @@ def compute_output(S, T, band_conditions):
 def draw_random_sample(R, k, S):  # Generates k random tuples, gets replaced by random sample of table function later
     sample = []
     for i in range(k):   # (age, loc_x, loc_y, name, 0 for S, 1 for T
-        sample.append((random.randint(0, 100), random.randint(0, 1000), random.randint(0, 1000), i, S))
+        sample.append((random.randint(0, 1000), random.randint(0, 100), random.randint(0, 1000), i, S))
     return sample
 
 
@@ -178,7 +178,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     random_sample_T = draw_random_sample(T, k//2, 1)
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     partitions = []         # all partitions
-    A = [(0, 100), (0, 1000)]  # because our random samples have values in between these domains
+    A = [(0, 1000), (0, 100)]  # because our random samples have values in between these domains
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
@@ -201,7 +201,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     return random_sample_S, random_sample_T, all_partitions
 
 def draw_partitions(S, T, parts):
-    p = figure(plot_width=1000, plot_height=1000)
+    p = figure(plot_width=1000, plot_height=600)
     count = 1
     for el in parts:
         start_x = []
@@ -224,21 +224,16 @@ def draw_partitions(S, T, parts):
         center_x = [(x1 + x2)/2 for x1, x2 in zip(end_x, start_x)]
         center_y = [(y1 + y2)/2 for y1, y2 in zip(end_y, start_y)]
         print(width)
-        print(height)
-        print(center_x)
-        print(center_y)
 
 
         part_names = []
-        nr = 1
         for i in range(len(center_x)):
-            part_names.append("P{}.{}".format(count, nr))
-            nr += 1
+            part_names.append("P{}".format(count))
 
-        for i in range(len(center_x)):
-            p.rect(x=center_x[i], y=center_y[i], width=width[i],
-                   height=height[i], fill_color=colors[i], line_color=colors[i], legend_label=part_names[i],
-                   name=part_names[i], visible=False)
+
+        p.rect(x=center_x[-1], y=center_y[-1], width=width[-1],
+               height=height[i], fill_color=colors[i], line_color=colors[i], legend_label=part_names[i],
+               name=part_names[i], visible=False)
 
 
         count += 1
@@ -256,6 +251,6 @@ def draw_partitions(S, T, parts):
     show(p)
 
 
-S, T, parts = recPart(2, 2, [5, 50], 100, 10)
+S, T, parts = recPart(2, 2, [50, 5], 100, 10)
 draw_partitions(S, T, parts)
 
