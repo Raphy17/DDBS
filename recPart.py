@@ -182,7 +182,8 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
-
+    all_partitions = []
+    all_partitions.append(partitions.copy())
     termination_condition = True
     i = 0
     while termination_condition:
@@ -193,58 +194,68 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         p_new_2.find_best_split(partitions, band_condition, w)
         partitions.append(p_new_1)
         partitions.append(p_new_2)
+        all_partitions.append(partitions.copy())
         i += 1
         if i == 5:
             break
-    return random_sample_S, random_sample_T, partitions
+    return random_sample_S, random_sample_T, all_partitions
 
-def draw_partitions(parts):
-    start_x = []
-    end_x = []
-    start_y = []
-    end_y = []
-    colors = bp.Turbo11
-    for part in parts:
-        partition = part.get_A()
-
-        start_x.append(partition[0][0])
-        end_x.append(partition[0][1])
-        start_y.append(partition[1][0])
-        end_y.append(partition[1][1])
-
-
-    width = [x1 - x2 for x1, x2 in zip(end_x, start_x)]
-    height = [y1 - y2 for y1, y2 in zip(end_y, start_y)]
-    center_x = [(x1 + x2)/2 for x1, x2 in zip(end_x, start_x)]
-    center_y = [(y1 + y2)/2 for y1, y2 in zip(end_y, start_y)]
-    print(width)
-    print(height)
-    print(center_x)
-    print(center_y)
+def draw_partitions(S, T, parts):
+    p = figure(plot_width=1000, plot_height=1000)
+    count = 1
+    for el in parts:
+        start_x = []
+        end_x = []
+        start_y = []
+        end_y = []
+        colors = bp.Turbo11
+        for part in el:
+            partition = part.get_A()
+            start_x.append(partition[0][0])
+            end_x.append(partition[0][1])
+            start_y.append(partition[1][0])
+            end_y.append(partition[1][1])
 
 
-    part_names = []
-    nr = 1
-    for i in range(len(center_x)):
-        part_names.append("P{}".format(nr))
-        nr += 1
-    p = figure(plot_width=1000, plot_height=max(end_y))
 
-    for i in range(len(center_x)):
-        p.rect(x=center_x[i], y=center_y[i], width=width[i],
-               height=height[i], fill_color=colors[i], line_color=colors[i], legend_label=part_names[i],
-               name=part_names[i])
-        #p.dot(x=)
 
-    p.legend.click_policy = "hide"
-    hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
+        width = [x1 - x2 for x1, x2 in zip(end_x, start_x)]
+        height = [y1 - y2 for y1, y2 in zip(end_y, start_y)]
+        center_x = [(x1 + x2)/2 for x1, x2 in zip(end_x, start_x)]
+        center_y = [(y1 + y2)/2 for y1, y2 in zip(end_y, start_y)]
+        print(width)
+        print(height)
+        print(center_x)
+        print(center_y)
 
-    p.add_tools(hover)
+
+        part_names = []
+        nr = 1
+        for i in range(len(center_x)):
+            part_names.append("P{}.{}".format(count, nr))
+            nr += 1
+
+        for i in range(len(center_x)):
+            p.rect(x=center_x[i], y=center_y[i], width=width[i],
+                   height=height[i], fill_color=colors[i], line_color=colors[i], legend_label=part_names[i],
+                   name=part_names[i], visible=False)
+
+
+        count += 1
+        p.legend.click_policy = "hide"
+        hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
+
+        p.add_tools(hover)
+
+    for i in range(len(S)):
+        p.cross(x=S[i][0], y=S[i][1], line_color="blue")
+
+    for i in range(len(T)):
+        p.cross(x=T[i][0], y=T[i][1], line_color="black")
 
     show(p)
 
 
-parts = recPart(2, 2, [5, 50], 100, 10)
-print((parts))
-draw_partitions(parts[2])
+S, T, parts = recPart(2, 2, [5, 50], 100, 10)
+draw_partitions(S, T, parts)
 
