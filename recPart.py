@@ -148,6 +148,9 @@ class Partition():          # tuple structure: the join necessary dimensions at 
     def get_best_split(self):
         return self.best_split
 
+    def get_A(self):
+        return self.A
+
 
 def compute_output(S, T, band_conditions):
     return S
@@ -193,9 +196,55 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         i += 1
         if i == 5:
             break
-    return partitions
+    return random_sample_S, random_sample_T, partitions
+
+def draw_partitions(parts):
+    start_x = []
+    end_x = []
+    start_y = []
+    end_y = []
+    colors = bp.Turbo11
+    for part in parts:
+        partition = part.get_A()
+
+        start_x.append(partition[0][0])
+        end_x.append(partition[0][1])
+        start_y.append(partition[1][0])
+        end_y.append(partition[1][1])
+
+
+    width = [x1 - x2 for x1, x2 in zip(end_x, start_x)]
+    height = [y1 - y2 for y1, y2 in zip(end_y, start_y)]
+    center_x = [(x1 + x2)/2 for x1, x2 in zip(end_x, start_x)]
+    center_y = [(y1 + y2)/2 for y1, y2 in zip(end_y, start_y)]
+    print(width)
+    print(height)
+    print(center_x)
+    print(center_y)
+
+
+    part_names = []
+    nr = 1
+    for i in range(len(center_x)):
+        part_names.append("P{}".format(nr))
+        nr += 1
+    p = figure(plot_width=1000, plot_height=max(end_y))
+
+    for i in range(len(center_x)):
+        p.rect(x=center_x[i], y=center_y[i], width=width[i],
+               height=height[i], fill_color=colors[i], line_color=colors[i], legend_label=part_names[i],
+               name=part_names[i])
+        #p.dot(x=)
+
+    p.legend.click_policy = "hide"
+    hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
+
+    p.add_tools(hover)
+
+    show(p)
 
 
 parts = recPart(2, 2, [5, 50], 100, 10)
-print(parts)
+print((parts))
+draw_partitions(parts[2])
 
