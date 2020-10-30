@@ -235,8 +235,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         if overhead_input_dupl > overhead_worker_load:
             termination_condition = False
         i += 1
-        if i == 10:
-            break
+
         print(i)
         all_partitions.append(partitions.copy())
 
@@ -245,12 +244,13 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 def draw_partitions(S, T, parts):
     p = figure(plot_width=1000, plot_height=600)
     count = 1
+    colors = bp.viridis(len(parts))
     for el in parts:
         start_x = []
         end_x = []
         start_y = []
         end_y = []
-        colors = bp.Turbo256
+
         for part in el:
             partition = part.get_A()
             start_x.append(partition[0][0])
@@ -281,7 +281,7 @@ def draw_partitions(S, T, parts):
         p.legend.click_policy = "hide"
         hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
 
-        p.add_tools(hover)
+    p.add_tools(hover)
 
     for i in range(len(S)):
         p.cross(x=S[i][0], y=S[i][1], line_color="blue")
