@@ -251,6 +251,17 @@ def draw_partitions(S, T, parts):
     show(p)
 
 
-S, T, parts = recPart(2, 2, [50, 5], 100, 10)
-draw_partitions(S, T, parts)
+def draw_samples(S, T):
+    p = figure(plot_width=1000, plot_height=600)
+    count = 1
+    for i in range(len(S)):
+        p.cross(x=S[i][0], y=S[i][1], line_color="blue")
+
+    for i in range(len(T)):
+        p.cross(x=T[i][0], y=T[i][1], line_color="black")
+
+    show(p)
+
+
+
 
