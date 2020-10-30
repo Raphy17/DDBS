@@ -9,7 +9,7 @@ def per_worker_load_variance(partitions, w):    #uses for beta 2, beta 3: (4, 1)
     Vp = (w - 1) / w**2
     tmp = 0
     for p in partitions:
-        load_of_p = load(p.get_input_size(), p.get_output_size(), 4, 1)
+        load_of_p = p.get_load()
         tmp += load_of_p ** 2
     Vp *= tmp
     return Vp
@@ -54,6 +54,7 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         self.top_score = None
         self.best_split = None
         self.dim_best_split = None
+        self.dupl_best_split = None
 
     def __repr__(self):
 
@@ -63,15 +64,17 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         best_split = None
         top_score = 0
         dim_best_split = 0
+        dupl_best_split = 0
         Vp = per_worker_load_variance(partitions, w) # before applying partitioning
         for dim in range(len(self.A)):       # find best split out of all dimensions
             best_x = 0
             score_best_x = 0
+            dupl_best_x = 0
             self.sample_input.sort(key=lambda x:x[dim])    # sort input_sample on dimension A
             for i in range(0, len(self.sample_input)-1):    # find best split a single dimension
                 x = (self.sample_input[i][dim] + self.sample_input[i+1][dim])/2     #
                 delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)  # replace 5 with conditio
-                Vp_new = Vp - (w-1)/w**2 * (load(self.get_input_size(), self.get_output_size(), 4, 1)**2)
+                Vp_new = Vp - (w-1)/w**2 * (self.get_load()**2)
                 Vp_new += (w-1)/w**2 * (load(1+i+delta_dup_x, 1+i+delta_dup_x, 4, 1)**2 + load(len(self.sample_input)-1-i+delta_dup_x, len(self.sample_input)-1-i+delta_dup_x, 4, 1)**2)
                 delta_var_x = Vp - Vp_new
                 if delta_dup_x == 0:
@@ -80,14 +83,16 @@ class Partition():          # tuple structure: the join necessary dimensions at 
                 if score_x > score_best_x:
                     score_best_x = score_x
                     best_x = x
+                    dupl_best_x = delta_dup_x
             if score_best_x > top_score:
                 top_score = score_best_x
                 best_split = best_x
                 dim_best_split = dim
+                dupl_best_split = dupl_best_x
         self.top_score = top_score
         self.best_split = best_split
         self.dim_best_split = dim_best_split
-
+        self.dupl_best_split = dupl_best_split
         return best_split, top_score, dim_best_split
 
     def apply_best_split(self, band_condition):   # we only copy T
@@ -130,6 +135,9 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         p_new_2 = Partition(p_new_2_A, p_new_2_sample_S, p_new_2_sample_T, p_new_2_sample_output)
         return p_new_1, p_new_2
 
+    def get_load(self):
+        return 4*self.get_input_size() + 1*self.get_output_size() #beta 2 = 4, beta 3 = 1
+
     def get_input_size(self):
         return len(self.sample_input)
 
@@ -142,6 +150,8 @@ class Partition():          # tuple structure: the join necessary dimensions at 
     def get_best_split(self):
         return self.best_split
 
+    def get_dupl_caused_by_split(self):
+        return self.dupl_best_split
 
 def compute_output(S, T, band_conditions):
     return S
@@ -163,6 +173,17 @@ def find_top_score_partition(partitions):       # should get changed to priority
             top_score_partition = p
     return top_score_partition
 
+def compute_max_worker_load(partitions, w):
+    worker_loads = [0,]*w
+    partition_loads = []
+    for p in partitions:
+        partition_loads.append(p.get_load())
+    partition_loads.sort(reverse=True)
+    for load in partition_loads:
+        worker_loads[worker_loads.index(min(worker_loads))] += load
+
+    return max(worker_loads)
+
 
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
     random_sample_S = draw_random_sample(S, k//2, 0)        #
@@ -174,19 +195,32 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
 
+
+    l_zero = load(k, len(random_output_sample), 4, 1)/w     #lower bound for worker load
+    l_max = compute_max_worker_load(partitions, w)
+    overhead_worker_load = (l_max-l_zero)/l_zero
+    total_input = k         #since there is 0 duplication yet -> total input is k tuples (k = lowerbound of input)
+    overhead_input_dupl = (total_input - k)/k
     termination_condition = True
     i = 0
     while termination_condition:
         p_max = find_top_score_partition(partitions)
+        total_input += p_max.get_dupl_caused_by_split()
         partitions.remove(p_max)
         p_new_1, p_new_2 = p_max.apply_best_split(band_condition)
         p_new_1.find_best_split(partitions, band_condition, w)
         p_new_2.find_best_split(partitions, band_condition, w)
         partitions.append(p_new_1)
         partitions.append(p_new_2)
+        l_max = compute_max_worker_load(partitions, w)
+        overhead_worker_load = (l_max - l_zero) / l_zero
+        overhead_input_dupl = (total_input - k) / k
+        if overhead_input_dupl > overhead_worker_load:
+            termination_condition = False
+
         i += 1
-        if i == 5:
-            break
+        print(i)
+
     return partitions
 
 
