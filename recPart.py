@@ -27,8 +27,14 @@ def compute_output(S, T, condition):
 
 def find_dupl(a, i, band, dim):
     dupl = 0
-    v_i_plus_1 = a[i+1][dim]
-    v_i = a[i][dim]
+    for j in range(i+1, len(a)):
+        v_i_plus_1 = a[i+1][dim]
+        if v_i_plus_1[-1] == 0:
+            break
+    for j in range(i, 0, -1):
+        v_i = a[i][dim]
+        if v_i[-1] == 0:
+            break
     j = i
     while j >=0:
         if v_i_plus_1 - a[j][dim] > band:
@@ -67,39 +73,50 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         return "{}".format(self.A)
 
     def find_best_split(self, partitions, band_condition, w):
+        valid_dims = self.get_valid_dims(band_condition)
         best_split = None
         top_score = 0
         dim_best_split = 0
         dupl_best_split = 0
-        Vp = per_worker_load_variance(partitions, w) # before applying partitioning
-        for dim in range(len(self.A)):       # find best split out of all dimensions
-            best_x = 0
-            score_best_x = 0
-            dupl_best_x = 0
-            self.sample_input.sort(key=lambda x:x[dim])    # sort input_sample on dimension A
-            for i in range(0, len(self.sample_input)-1):    # find best split a single dimension
-                x = (self.sample_input[i][dim] + self.sample_input[i+1][dim])/2     #
-                delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)  # replace 5 with conditio
-                Vp_new = Vp - (w-1)/w**2 * (self.get_load()**2)
-                Vp_new += (w-1)/w**2 * (load(1+i+delta_dup_x, 1+i+delta_dup_x, 4, 1)**2 + load(len(self.sample_input)-1-i+delta_dup_x, len(self.sample_input)-1-i+delta_dup_x, 4, 1)**2)
-                delta_var_x = Vp - Vp_new
-                if delta_dup_x == 0:
-                    delta_dup_x = 1
-                score_x = delta_var_x/delta_dup_x
-                if score_x > score_best_x:
-                    score_best_x = score_x
-                    best_x = x
-                    dupl_best_x = delta_dup_x
-            if score_best_x > top_score:
-                top_score = score_best_x
-                best_split = best_x
-                dim_best_split = dim
-                dupl_best_split = dupl_best_x
-        self.top_score = top_score
-        self.best_split = best_split
-        self.dim_best_split = dim_best_split
-        self.dupl_best_split = dupl_best_split
-        return best_split, top_score, dim_best_split
+        if len(valid_dims) > 0:     #if len == 0, its a small partition
+            Vp = per_worker_load_variance(partitions, w) # before applying partitioning
+            for dim in valid_dims:       # find best split out of all dimensions
+                best_x = 0
+                score_best_x = 0
+                dupl_best_x = 0
+                self.sample_input.sort(key=lambda x:x[dim])    # sort input_sample on dimension A
+                for i in range(0, len(self.sample_input)-1):    # find best split a single dimension
+                    x = (self.sample_input[i][dim] + self.sample_input[i+1][dim])/2     #
+                    delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)  # replace 5 with conditio
+                    Vp_new = Vp - (w-1)/w**2 * (self.get_load()**2)
+                    Vp_new += (w-1)/w**2 * (load(1+i+delta_dup_x, 1+i+delta_dup_x, 4, 1)**2 + load(len(self.sample_input)-1-i+delta_dup_x, len(self.sample_input)-1-i+delta_dup_x, 4, 1)**2)
+                    delta_var_x = Vp - Vp_new
+                    if delta_dup_x == 0:
+                        delta_dup_x = 1
+                    score_x = delta_var_x/delta_dup_x
+                    if score_x > score_best_x:
+                        score_best_x = score_x
+                        best_x = x
+                        dupl_best_x = delta_dup_x
+                if score_best_x > top_score:
+                    top_score = score_best_x
+                    best_split = best_x
+                    dim_best_split = dim
+                    dupl_best_split = dupl_best_x
+            self.top_score = top_score
+            self.best_split = best_split
+            self.dim_best_split = dim_best_split
+            self.dupl_best_split = dupl_best_split
+            return best_split, top_score, dim_best_split, dupl_best_split
+        else: #1 bucket
+            sigma_r = 0
+            sigma_c = 0
+            if sigma_r > sigma_c:
+                top_score = sigma_r
+                best_split = "row"
+                
+
+
 
     def apply_best_split(self, band_condition):   # we only copy T
         self.sample_S.sort(key=lambda x: x[self.dim_best_split])
@@ -115,15 +132,19 @@ class Partition():          # tuple structure: the join necessary dimensions at 
             else:
                 p_new_2_sample_S.append(self.sample_S[i])
         # now ad all duplicates but only duplicatre relation T
-
-        biggest_S_tuple_in_p_new_1 = p_new_1_sample_S[-1]
-        smallest_S_tuple_in_p_new_2 = p_new_2_sample_S[0]
+        biggest_value_of_S_tuple_in_p_new_1 = self.A[self.dim_best_split][1]
+        smallest_value_of_S_tuple_in_p_new_2 = self.A[self.dim_best_split][0]
+        if len(p_new_1_sample_S) >= 1:
+            biggest_value_of_S_tuple_in_p_new_1 = p_new_1_sample_S[-1][self.dim_best_split]
+        if len(p_new_2_sample_S) >= 1:
+            smallest_value_of_S_tuple_in_p_new_2 = p_new_2_sample_S[0][self.dim_best_split]
 
         # now add all the tuple Int + tuple in band that belong to T
+
         for tuple in self.sample_T:
-            if tuple[self.dim_best_split] <= biggest_S_tuple_in_p_new_1[self.dim_best_split] + band_condition[self.dim_best_split]:
+            if tuple[self.dim_best_split] <= biggest_value_of_S_tuple_in_p_new_1 + band_condition[self.dim_best_split]:
                 p_new_1_sample_T.append(tuple)
-            if tuple[self.dim_best_split] >= smallest_S_tuple_in_p_new_2[self.dim_best_split] - band_condition[self.dim_best_split]:
+            if tuple[self.dim_best_split] >= smallest_value_of_S_tuple_in_p_new_2 - band_condition[self.dim_best_split]:
                 p_new_2_sample_T.append(tuple)
 
 
@@ -140,6 +161,13 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         p_new_1 = Partition(p_new_1_A, p_new_1_sample_S, p_new_1_sample_T, p_new_1_sample_output)
         p_new_2 = Partition(p_new_2_A, p_new_2_sample_S, p_new_2_sample_T, p_new_2_sample_output)
         return p_new_1, p_new_2
+
+    def get_valid_dims(self, band_condition):
+        valid_dims = []
+        for i in range(len(self.A)):
+            if self.A[i][1] - self.A[i][0] > band_condition[i]*2:
+                valid_dims.append(i)
+        return valid_dims
 
     def get_load(self):
         return 4*self.get_input_size() + 1*self.get_output_size() #beta 2 = 4, beta 3 = 1
@@ -197,16 +225,29 @@ def compute_max_worker_load(partitions, w):
     return max(worker_loads)
 
 
+def construct_pareto_data(size, S):
+    a, m = 0.5, 15.  # shape and mode
+    x = (np.random.pareto(a, size) + 1) * m
+    y = (np.random.pareto(a, size) + 1) * m
+    data = []
+    for i in range(len(x)):
+        x_tmp = min(100, x[i])
+        y_tmp = min(100, y[i])
+
+        data.append((x_tmp, y_tmp, 2, 1, S))
+    return data
+
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
-    random_sample_S = draw_random_sample(S, k//2, 0)        #
-    random_sample_T = draw_random_sample(T, k//2, 1)
+    random_sample_S = construct_pareto_data(k//2, 0) #draw_random_sample(S, k//2, 0)        #
+    random_sample_T = construct_pareto_data(k//2, 1) #draw_random_sample(T, k//2, 1)
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     partitions = []         # all partitions
-    A = [(0, 1000), (0, 100)]  # because our random samples have values in between these domains
+    A = [(0, 100), (0, 100)]  # because our random samples have values in between these domains
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
 
+    draw_samples(random_sample_S, random_sample_T)
 
 
     l_zero = load(k, len(random_output_sample), 4, 1)/w     #lower bound for worker load
@@ -222,11 +263,13 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     i = 0
     while termination_condition:
         p_max = find_top_score_partition(partitions)
+        if p_max is None:
+            break
         total_input += p_max.get_dupl_caused_by_split()
         partitions.remove(p_max)
         p_new_1, p_new_2 = p_max.apply_best_split(band_condition)
-        p_new_1.find_best_split(partitions, band_condition, w)
-        p_new_2.find_best_split(partitions, band_condition, w)
+        print(p_new_1.find_best_split(partitions, band_condition, w))
+        print(p_new_2.find_best_split(partitions, band_condition, w))
         partitions.append(p_new_1)
         partitions.append(p_new_2)
         l_max = compute_max_worker_load(partitions, w)
@@ -234,11 +277,12 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         overhead_input_dupl = (total_input - k) / k
         if overhead_input_dupl > overhead_worker_load:
             termination_condition = False
+
+
+        all_partitions.append(partitions.copy())
         i += 1
         if i == 10:
             break
-        print(i)
-        all_partitions.append(partitions.copy())
 
     return random_sample_S, random_sample_T, all_partitions
 
@@ -265,7 +309,7 @@ def draw_partitions(S, T, parts):
         height = [y1 - y2 for y1, y2 in zip(end_y, start_y)]
         center_x = [(x1 + x2)/2 for x1, x2 in zip(end_x, start_x)]
         center_y = [(y1 + y2)/2 for y1, y2 in zip(end_y, start_y)]
-        print(width)
+
 
 
         part_names = []
@@ -303,7 +347,7 @@ def draw_samples(S, T):
 
     show(p)
 
-s, t, parts = recPart(1, 2, [50, 5], 100, 10)
+s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
 draw_partitions(s, t, parts)
 
 
