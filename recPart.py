@@ -28,12 +28,12 @@ def compute_output(S, T, condition):
 def find_dupl(a, i, band, dim):
     dupl = 0
     for j in range(i+1, len(a)):
-        v_i_plus_1 = a[i+1][dim]
-        if v_i_plus_1[-1] == 0:
+        v_i_plus_1 = a[j][dim]
+        if a[j][-1] == 0:
             break
-    for j in range(i, 0, -1):
-        v_i = a[i][dim]
-        if v_i[-1] == 0:
+    for j in range(i, -1, -1):
+        v_i = a[j][dim]
+        if a[j][-1] == 0:
             break
     j = i
     while j >=0:
@@ -107,14 +107,14 @@ class Partition():          # tuple structure: the join necessary dimensions at 
             self.best_split = best_split
             self.dim_best_split = dim_best_split
             self.dupl_best_split = dupl_best_split
-            return best_split, top_score, dim_best_split, dupl_best_split
-        else: #1 bucket
+        else: #1 bucket is supposed to go here
             sigma_r = 0
             sigma_c = 0
             if sigma_r > sigma_c:
                 top_score = sigma_r
                 best_split = "row"
-                
+        return best_split, top_score, dim_best_split, dupl_best_split
+
 
 
 
@@ -200,7 +200,7 @@ def compute_output(S, T, band_conditions):
 def draw_random_sample(R, k, S):  # Generates k random tuples, gets replaced by random sample of table function later
     sample = []
     for i in range(k):   # (age, loc_x, loc_y, name, 0 for S, 1 for T
-        sample.append((random.randint(0, 1000), random.randint(0, 100), random.randint(0, 1000), i, S))
+        sample.append((random.randint(0, 1000), random.randint(0, 1000), random.randint(0, 1000), i, S))
     return sample
 
 
@@ -238,11 +238,16 @@ def construct_pareto_data(size, S):
     return data
 
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
-    random_sample_S = construct_pareto_data(k//2, 0) #draw_random_sample(S, k//2, 0)        #
-    random_sample_T = construct_pareto_data(k//2, 1) #draw_random_sample(T, k//2, 1)
+
+    #choose distribution, pareto doesnt woprk well yet, cause no 1 bucket
+    # random_sample_S = construct_pareto_data(k//2, 0) #draw_random_sample(S, k//2, 0)
+    # random_sample_T = construct_pareto_data(k//2, 1) #draw_random_sample(T, k//2, 1)
+    random_sample_S = draw_random_sample(S, k//2, 0)        #
+    random_sample_T = draw_random_sample(T, k//2, 1)
+
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     partitions = []         # all partitions
-    A = [(0, 100), (0, 100)]  # because our random samples have values in between these domains
+    A = [(0, 1000), (0, 1000)]  # because our random samples have values in between these domains
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
@@ -347,7 +352,8 @@ def draw_samples(S, T):
 
     show(p)
 
-s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
+s, t, parts = recPart(1, 2, [50, 50], 500, 10)
+print(parts[-1])
 draw_partitions(s, t, parts)
 
 
