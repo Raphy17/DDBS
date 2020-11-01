@@ -113,6 +113,17 @@ class Partition():          # tuple structure: the join necessary dimensions at 
             if sigma_r > sigma_c:
                 top_score = sigma_r
                 best_split = "row"
+
+
+
+
+
+
+
+
+
+
+
         return best_split, top_score, dim_best_split, dupl_best_split
 
 
@@ -354,7 +365,7 @@ def draw_samples(S, T):
 
     show(p)
 
-s, t, parts = recPart(1, 2, [50, 50], 500, 10)
+s, t, parts = recPart(1, 2, [50, 50], 100, 10)
 print(parts[-1])
 draw_partitions(s, t, parts)
 
