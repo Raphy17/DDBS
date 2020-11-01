@@ -78,7 +78,7 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         top_score = 0
         dim_best_split = 0
         dupl_best_split = 0
-        if len(valid_dims) > 0:     #if len == 0, its a small partition
+        if len(valid_dims) > 0:     #if len == 0, its a small partition -> use 1 bucket
             Vp = per_worker_load_variance(partitions, w) # before applying partitioning
             for dim in valid_dims:       # find best split out of all dimensions
                 best_x = 0
