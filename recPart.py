@@ -63,7 +63,7 @@ class Partition():          # tuple structure: the join necessary dimensions at 
         self.sample_input = sample_S.copy() + sample_T.copy()
         self.sample_output = sample_output      #gets calculated
         self.A = A      # e.g. A = [(20, 30), (1031, 1300), (742, 935)] age 20-30, x_loc 1031-1300, y_loc 742-935
-        self.top_score = None
+        self.top_score = 0
         self.best_split = None
         self.dim_best_split = None
         self.dupl_best_split = None
@@ -74,7 +74,7 @@ class Partition():          # tuple structure: the join necessary dimensions at 
 
     def find_best_split(self, partitions, band_condition, w):
         valid_dims = self.get_valid_dims(band_condition)
-        best_split = None
+        best_split = 0
         top_score = 0
         dim_best_split = 0
         dupl_best_split = 0
@@ -238,8 +238,8 @@ def compute_max_worker_load(partitions, w):
 
 def construct_pareto_data(size, S):
     a, m = 0.5, 15.  # shape and mode
-    x = (np.random.pareto(a, size) + 1) * m
-    y = (np.random.pareto(a, size) + 1) * m
+    x = (np.random.pareto(a, size)) * m
+    y = (np.random.pareto(a, size)) * m
     data = []
     for i in range(len(x)):
         x_tmp = min(100, x[i])
@@ -251,14 +251,14 @@ def construct_pareto_data(size, S):
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for 10 years apart, 100km ind x and y direction
 
     #choose distribution, pareto doesnt woprk well yet, cause no 1 bucket
-    # random_sample_S = construct_pareto_data(k//2, 0) #draw_random_sample(S, k//2, 0)
-    # random_sample_T = construct_pareto_data(k//2, 1) #draw_random_sample(T, k//2, 1)
-    random_sample_S = draw_random_sample(S, k//2, 0)        #
-    random_sample_T = draw_random_sample(T, k//2, 1)
+    random_sample_S = construct_pareto_data(k//2, 0) #draw_random_sample(S, k//2, 0)
+    random_sample_T = construct_pareto_data(k//2, 1) #draw_random_sample(T, k//2, 1)
+    # random_sample_S = draw_random_sample(S, k//2, 0)        #
+    # random_sample_T = draw_random_sample(T, k//2, 1)
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     partitions = []         # all partitions
-    A = [(0, 1000), (0, 1000)]  # because our random samples have values in between these domains
+    A = [(0, 100), (0, 100)]  # because our random samples have values in between these domains
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
@@ -297,9 +297,8 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
         all_partitions.append(partitions.copy())
         i += 1
-        if i == 10:
+        if i == 30:
             break
-
 
     return random_sample_S, random_sample_T, all_partitions
 
@@ -365,7 +364,7 @@ def draw_samples(S, T):
 
     show(p)
 
-s, t, parts = recPart(1, 2, [50, 50], 100, 10)
+s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
 print(parts[-1])
 draw_partitions(s, t, parts)
 
