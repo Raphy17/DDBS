@@ -107,7 +107,8 @@ class Partition():          # tuple structure: the join necessary dimensions at 
             self.best_split = best_split
             self.dim_best_split = dim_best_split
             self.dupl_best_split = dupl_best_split
-        else: #1 bucket is supposed to go here
+        else:
+            #1 bucket is supposed to go here
             sigma_r = 0
             sigma_c = 0
             if sigma_r > sigma_c:
@@ -364,8 +365,7 @@ def draw_samples(S, T):
 
     show(p)
 
+
 s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
 print(parts[-1])
 draw_partitions(s, t, parts)
-
-
