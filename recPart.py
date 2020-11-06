@@ -112,7 +112,7 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
             self.dim_best_split = dim_best_split
             self.dupl_best_split = dupl_best_split
         else:
-
+            # TODO: Calcuate deltas
 
             # Caluculate sigmas
             sigma_r = delta_var_rp1_c / delta_dup_rp1_c
