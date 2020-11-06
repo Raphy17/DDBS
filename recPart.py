@@ -199,8 +199,8 @@ def compute_output(S, T, band_conditions):
     output = []
     for s_element in S:
         for t_element in T:
+            joins = True
             for i in range(len(band_conditions)):
-                joins = True
                 if not (abs(s_element[i] - t_element[i]) <= band_conditions[i]):
                     joins = False
             if joins:
