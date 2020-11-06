@@ -11,9 +11,7 @@ numpy==1.19.4             # via -r requirements.in, bokeh, pandas
 packaging==20.4           # via bokeh
 pandas==1.1.4             # via -r requirements.in
 pillow==8.0.1             # via bokeh
-py4j==0.10.9              # via pyspark
 pyparsing==2.4.7          # via packaging
-pyspark==3.0.1            # via -r requirements.in
 python-dateutil==2.8.1    # via bokeh, pandas
 pytz==2020.4              # via pandas
 pyyaml==5.3.1             # via bokeh
