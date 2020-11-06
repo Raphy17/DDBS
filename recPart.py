@@ -22,10 +22,6 @@ def per_worker_load_variance(partitions, w):  # uses for beta 2, beta 3: (4, 1) 
     return Vp
 
 
-def compute_output(S, T, condition):
-    return S
-
-
 def find_dupl(a, i, band, dim):
     dupl = 0
     for j in range(i + 1, len(a)):
@@ -198,7 +194,16 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
 
 
 def compute_output(S, T, band_conditions):
-    return S
+    output = []
+    for s_element in S:
+        for t_element in T:
+            for i in range(len(band_conditions)):
+                joins = True
+                if not (abs(s_element[i] - t_element[i]) <= band_conditions[i]):
+                    joins = False
+            if joins:
+                output.append((s_element, t_element))
+    return output
 
 
 def draw_random_sample(R, k, S):  # Generates k random tuples, gets replaced by random sample of table function later
@@ -246,7 +251,7 @@ def construct_pareto_data(size, S):
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for
     # 10 years apart, 100km ind x and y direction
 
-    # choose distribution, pareto doesnt woprk well yet, cause no 1 bucket
+    # choose distribution, pareto doesnt work well yet, cause no 1 bucket
     random_sample_S = construct_pareto_data(k // 2, 0)  # draw_random_sample(S, k//2, 0)
     random_sample_T = construct_pareto_data(k // 2, 1)  # draw_random_sample(T, k//2, 1)
     # random_sample_S = draw_random_sample(S, k//2, 0)        #
@@ -354,6 +359,7 @@ def draw_samples(S, T):
     show(p)
 
 
-s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
-print(parts[-1])
-draw_partitions(s, t, parts)
+if __name__ == '__main__':
+    s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
+    print(parts[-1])
+    draw_partitions(s, t, parts)
