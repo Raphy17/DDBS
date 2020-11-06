@@ -108,18 +108,18 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
             self.dim_best_split = dim_best_split
             self.dupl_best_split = dupl_best_split
         else:
-            # TODO: Calcuate deltas
+            print("1 bucket")
 
             # Caluculate sigmas
 
-            sigma_r = delta_var_rp1_c / delta_dup_rp1_c
-            sigma_c = delta_var_rp1_c / delta_dup_r_cp1
-            if sigma_r > sigma_c:
-                top_score = sigma_r
-                best_split = "row"
-            else:
-                top_score = sigma_c
-                best_split = 'column'
+            # sigma_r = delta_var_rp1_c / delta_dup_rp1_c
+            # sigma_c = delta_var_rp1_c / delta_dup_r_cp1
+            # if sigma_r > sigma_c:
+            #     top_score = sigma_r
+            #     best_split = "row"
+            # else:
+            #     top_score = sigma_c
+            #     best_split = 'column'
 
         return best_split, top_score, dim_best_split, dupl_best_split
 
@@ -157,10 +157,29 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
         p_new_1_A[self.dim_best_split] = (self.A[self.dim_best_split][0], self.best_split)
         p_new_2_A = self.A.copy()
         p_new_2_A[self.dim_best_split] = (self.best_split, self.A[self.dim_best_split][1])
+        print("--sample input")
 
+        print(len(self.sample_S))
+        print(len(self.sample_T))
+        print(len(p_new_1_sample_S))
+        print(len(p_new_1_sample_T))
+        print(len(p_new_2_sample_S))
+        print(len(p_new_2_sample_T))
+        print(p_new_1_sample_S)
+        print(p_new_1_sample_T)
+        print(p_new_2_sample_S)
+        print(p_new_2_sample_T)
+        print("---")
+        print(self.sample_S)
+        print(self.sample_T)
+
+
+        print("--sample output")
+        print(len(self.sample_output))
         p_new_1_sample_output = compute_output(p_new_1_sample_S, p_new_1_sample_T, band_condition)
-
+        print(len(p_new_1_sample_output))
         p_new_2_sample_output = compute_output(p_new_2_sample_S, p_new_2_sample_T, band_condition)
+        print(len(p_new_2_sample_output))
 
         p_new_1 = Partition(p_new_1_A, p_new_1_sample_S, p_new_1_sample_T, p_new_1_sample_output)
         p_new_2 = Partition(p_new_2_A, p_new_2_sample_S, p_new_2_sample_T, p_new_2_sample_output)
@@ -211,7 +230,7 @@ def compute_output(S, T, band_conditions):
 def draw_random_sample(R, k, S):  # Generates k random tuples, gets replaced by random sample of table function later
     sample = []
     for i in range(k):  # (age, loc_x, loc_y, name, 0 for S, 1 for T
-        sample.append((random.randint(0, 100), random.randint(0, 100), random.randint(0, 1000), i, S))
+        sample.append((random.randint(0, 1000), random.randint(0, 1000), random.randint(0, 1000), i, S))
     return sample
 
 
@@ -231,9 +250,13 @@ def compute_max_worker_load(partitions, w):
     for p in partitions:
         partition_loads.append(p.get_load())
     partition_loads.sort(reverse=True)
+    print("---")
+    print(partition_loads)
+    print(sum(partition_loads))
     for load in partition_loads:
         worker_loads[worker_loads.index(min(worker_loads))] += load
-
+    print(worker_loads)
+    print("---")
     return max(worker_loads)
 
 
@@ -255,20 +278,23 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
     # choose distribution, pareto doesnt work well yet, cause no 1 bucket
     #random_sample_S = construct_pareto_data(k // 2, 0)  # draw_random_sample(S, k//2, 0)
-   # random_sample_T = construct_pareto_data(k // 2, 1)  # draw_random_sample(T, k//2, 1)
+    #random_sample_T = construct_pareto_data(k // 2, 1)  # draw_random_sample(T, k//2, 1)
     random_sample_S = draw_random_sample(S, k//2, 0)        #
     random_sample_T = draw_random_sample(T, k//2, 1)
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
+    print(len(random_output_sample))
 
     partitions = []         # all partitions
-    #A = [(0, 100000), (0, 100000)]  # because our random samples have values in between these domains
-    A = [(0, max(random_sample_S+random_sample_T, key=lambda item:item[0])[0]), (0,  max(random_sample_S+random_sample_T, key=lambda item:item[1])[1])]
-    print(A)
+    A = []          #compute initial domain dynamically
+    for dim in range(len(band_condition)):  #len(band_conditions) == number of dimensions
+        A.append((0, max(random_sample_S+random_sample_T, key=lambda item:item[dim])[dim]))
+    # A = [(0, 1000), (0, 1000)]  # domain 2 dimensions
+
 
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
-    print(root_p.find_best_split(partitions, band_condition, w))
+    root_p.find_best_split(partitions, band_condition, w)
 
     draw_samples(random_sample_S, random_sample_T)
 
@@ -280,7 +306,6 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
     all_partitions = []
     all_partitions.append(partitions.copy())
-    print(root_p)
     termination_condition = True
     i = 0
     while termination_condition:
@@ -290,12 +315,9 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         total_input += p_max.get_dupl_caused_by_split()
         partitions.remove(p_max)
         p_new_1, p_new_2 = p_max.apply_best_split(band_condition)
-        p_new_1
-        p_new_2
         p_new_1.find_best_split(partitions, band_condition, w)
         p_new_2.find_best_split(partitions, band_condition, w)
-        print(p_new_1.get_topScore())
-        print(p_new_2.get_topScore())
+
         partitions.append(p_new_1)
         partitions.append(p_new_2)
         l_max = compute_max_worker_load(partitions, w)
@@ -309,7 +331,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         if i == 50:
             break
 
-    return random_sample_S, random_sample_T, all_partitions
+    return random_sample_S, random_sample_T, all_partitions, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero
 
 
 def draw_partitions(S, T, parts):
@@ -369,7 +391,13 @@ def draw_samples(S, T):
     show(p)
 
 if __name__ == '__main__':
-    s, t, parts = recPart(1, 2, [5, 5], 500, 10)
-    print(parts[-1])
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero = recPart(1, 2, [50, 50], 200, 10)
+    print("-----")
+    print(total_input)
+    print(overhead_input_dupl)
+    print("---load")
+    print(l_zero)
+    print(l_max)
+    print(overhead_worker_load)
     draw_partitions(s, t, parts)
 
