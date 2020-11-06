@@ -37,6 +37,6 @@ def draw_samples(S, T):
     show(p)
 
 a = [1, 3, 4]
-for i in a:
-    print(i)
+b = [2, 3, 4]
+print(a.union(b))
 

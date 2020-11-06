@@ -160,6 +160,9 @@ class Partition():          # tuple structure: the join necessary dimensions at 
                 p_new_2_sample_T.append(tuple)
 
 
+        for test in self.A:
+            if test[0] > test[1]:
+                print(self.A)
 
         p_new_1_A = self.A.copy()
         p_new_1_A[self.dim_best_split] = (self.A[self.dim_best_split][0], self.best_split)
@@ -243,8 +246,8 @@ def construct_pareto_data(size, S):
     y = (np.random.pareto(a, size)) * m
     data = []
     for i in range(len(x)):
-        x_tmp = min(100, x[i])
-        y_tmp = min(100, y[i])
+        x_tmp = min(100000, x[i])
+        y_tmp = min(100000, y[i])
 
         data.append((x_tmp, y_tmp, 2, 1, S))
     return data
@@ -259,7 +262,9 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     partitions = []         # all partitions
-    A = [(0, 100), (0, 100)]  # because our random samples have values in between these domains
+    A = [(0, 100000), (0, 100000)]  # because our random samples have values in between these domains
+    A = [(0, max(random_sample_S+random_sample_T, key=lambda item:item[0])[0]), (0,  max(random_sample_S+random_sample_T, key=lambda item:item[1])[1])]
+    print(A)
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
     partitions.append(root_p)
     print(root_p.find_best_split(partitions, band_condition, w))
@@ -275,7 +280,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
     all_partitions = []
     all_partitions.append(partitions.copy())
-
+    print(root_p)
     termination_condition = True
     i = 0
     while termination_condition:
@@ -285,8 +290,12 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         total_input += p_max.get_dupl_caused_by_split()
         partitions.remove(p_max)
         p_new_1, p_new_2 = p_max.apply_best_split(band_condition)
-        print(p_new_1.find_best_split(partitions, band_condition, w))
-        print(p_new_2.find_best_split(partitions, band_condition, w))
+        p_new_1
+        p_new_2
+        p_new_1.find_best_split(partitions, band_condition, w)
+        p_new_2.find_best_split(partitions, band_condition, w)
+        print(p_new_1.get_topScore())
+        print(p_new_2.get_topScore())
         partitions.append(p_new_1)
         partitions.append(p_new_2)
         l_max = compute_max_worker_load(partitions, w)
@@ -298,7 +307,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
         all_partitions.append(partitions.copy())
         i += 1
-        if i == 30:
+        if i == 50:
             break
 
     return random_sample_S, random_sample_T, all_partitions
@@ -366,6 +375,6 @@ def draw_samples(S, T):
     show(p)
 
 
-s, t, parts = recPart(1, 2, [5, 5], 1000, 10)
+s, t, parts = recPart(1, 2, [5, 5], 500, 10)
 print(parts[-1])
 draw_partitions(s, t, parts)
