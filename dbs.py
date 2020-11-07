@@ -64,7 +64,7 @@ class Database:
                 for el in query:
                     cursor.execute(el)
                     result.append(cursor.fetchall()[0])
-            return result
+            return tuple(result)
         except Error as e:
             print("The error '{}' occurred".format(e))
             return None
