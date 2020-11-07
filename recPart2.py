@@ -1,4 +1,4 @@
-#recPart but duplication and load variance are not extrapolated
+#the same but varianze and duplication extrapolated
 
 import random
 import pandas as pd
@@ -11,7 +11,7 @@ import bokeh.palettes as bp
 
 
 def load(input_size, output_size, b2, b3):
-    return (b2 * input_size + b3 * output_size)         #1:1000 = ratio sample:real
+    return (b2 * input_size + b3 * output_size)*1000            #1:1000 = ratio sample:real
 
 
 def per_worker_load_variance(partitions, w):  # uses for beta 2, beta 3: (4, 1) (like in amazon cloud cluster)
@@ -89,10 +89,10 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
                     x = (self.sample_input[i][dim] + self.sample_input[i + 1][dim]) / 2
                     if not (self.A[dim][0] + band_condition[dim]/3 < x < self.A[dim][1] - band_condition[dim]/3):
                         continue
-                    delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)
+                    delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim) * 1000
                     Vp_new = Vp - (w - 1) / w ** 2 * (self.get_load() ** 2)
-                    Vp_new += (w - 1) / w ** 2 * (load(1 + i + delta_dup_x, (self.get_output_size()/self.get_input_size())*(1 + i+delta_dup_x), 4, 1) ** 2 + load(
-                        len(self.sample_input) - 1 - i + delta_dup_x, (self.get_output_size()/self.get_input_size())*(len(self.sample_input) - 1 - i + delta_dup_x ), 4,
+                    Vp_new += (w - 1) / w ** 2 * (load(1 + i , (self.get_output_size()/self.get_input_size())*(1 + i), 4, 1) ** 2 + load(
+                        len(self.sample_input) - 1 - i , (self.get_output_size()/self.get_input_size())*(len(self.sample_input) - 1 - i ), 4,
                         1) ** 2) #removed duplication from adding to variance, since it's ambiguous in paper
                     delta_var_x = Vp - Vp_new
                     if delta_dup_x == 0:
@@ -215,7 +215,7 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
         return valid_dims
 
     def get_load(self):
-        return (4 * self.get_input_size() + 1 * self.get_output_size())  # beta 2 = 4, beta 3 = 1, relaztion sample:real = 1:1000
+        return (4 * self.get_input_size() + 1 * self.get_output_size()) * 1000  # beta 2 = 4, beta 3 = 1, relaztion sample:real = 1:1000
 
     def get_input_size(self):
         return len(self.sample_input)
@@ -282,7 +282,7 @@ def compute_max_worker_load(partitions, w):
 
 
 def construct_pareto_data(size, S):
-    a, m = 0.5, 15.  # shape and mode
+    a, m = 1.5, 15.  # shape and mode
     x = (np.random.pareto(a, size)) * m
     y = (np.random.pareto(a, size)) * m
     data = []
@@ -298,10 +298,10 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     # 10 years apart, 100km ind x and y direction
 
     # choose distribution, pareto doesnt work well yet, cause no 1 bucket
-    # random_sample_S = construct_pareto_data(k // 2, 0)  # draw_random_sample(S, k//2, 0)
-    # random_sample_T = construct_pareto_data(k // 2, 1)  # draw_random_sample(T, k//2, 1)
-    random_sample_S = draw_random_sample(S, k//2, 0)        #
-    random_sample_T = draw_random_sample(T, k//2, 1)
+    random_sample_S = construct_pareto_data(k // 2, 0)  # draw_random_sample(S, k//2, 0)
+    random_sample_T = construct_pareto_data(k // 2, 1)  # draw_random_sample(T, k//2, 1)
+    # random_sample_S = draw_random_sample(S, k//2, 0)        #
+    # random_sample_T = draw_random_sample(T, k//2, 1)
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     print(len(random_output_sample))
@@ -322,8 +322,8 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     l_zero = load(k, len(random_output_sample), 4, 1) / w  # lower bound for worker load
     l_max = compute_max_worker_load(partitions, w)
     overhead_worker_load = (l_max - l_zero) / l_zero
-    total_input = k  # since there is 0 duplication yet -> total input is k tuples (k = lowerbound of input)
-    overhead_input_dupl = (total_input - k) / k
+    total_input = k*1000  # since there is 0 duplication yet -> total input is k tuples (k = lowerbound of input)
+    overhead_input_dupl = (total_input - k*1000) / (1000*k)
 
     all_partitions = []
     all_partitions.append(partitions.copy())
@@ -350,7 +350,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         partitions.append(p_new_2)
         l_max = compute_max_worker_load(partitions, w)
         overhead_worker_load = (l_max - l_zero) / l_zero
-        overhead_input_dupl = (total_input - k) / k
+        overhead_input_dupl = (total_input - k*1000) / (1000*k)
         over_head_history.append(max(overhead_input_dupl, overhead_worker_load))
         if overhead_input_dupl > overhead_worker_load:
             termination_condition = False
@@ -424,7 +424,7 @@ def draw_samples(S, T):
     show(p)
 
 if __name__ == '__main__':
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [50, 50], 1000, 10)
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [50, 50], 200, 10)
     print(parts)
     print("-----")
     print(total_input)

@@ -36,7 +36,8 @@ def draw_samples(S, T):
 
     show(p)
 
-a = [1, 3, 4]
-b = [2, 3, 4]
-print(a.union(b))
+a = [1, 2, 3, 4, 5, 6]
+b = a[0:3]
+b[1] = 7
+print(a)
 
