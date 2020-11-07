@@ -36,7 +36,28 @@ def draw_samples(S, T):
 
     show(p)
 
-a = [1, 3, 4]
-for i in a:
-    print(i)
 
+a = [3, 2]
+def duplication_caused_by_small_partitioning(a):      #solution for n dimensiosn, not only rows and cols like in paper
+    delta_dupl_all_dim = []
+    for i in range(len(a)):
+        #duplication caused by having n subpartitions assuming uniform distribution in a small-bucket
+        n = a[i]
+
+        dupl_caused_now = (n-1)*1/2
+        tmp = n - (n % 2)
+        number_of_duplicated_small_zones = tmp/2 * (tmp/2+1) - (1 - n % 2) * tmp/2
+        dupl_caused_now += number_of_duplicated_small_zones/n
+        print(dupl_caused_now)
+        dupl_caused_after_increase = n*1/2
+        tmp = (n+1) - ((n+1) % 2)
+        number_of_duplicated_small_zones = tmp/2 * (tmp/2+1) - (1 - (n+1) % 2) * tmp/2
+        dupl_caused_after_increase += number_of_duplicated_small_zones/(n+1)
+        print(dupl_caused_after_increase)
+
+        delta_dupl = (dupl_caused_after_increase - dupl_caused_now)
+
+        delta_dupl_all_dim.append(delta_dupl)
+    return delta_dupl_all_dim
+
+print(duplication_caused_by_small_partitioning(a))
