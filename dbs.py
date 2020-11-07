@@ -27,10 +27,10 @@ class Database:
 
         return connection
 
-    def create_table(self, distr_type):
+    def create_table(self, table_name):
         self.counter_t += 1
         sample_table = "CREATE TABLE IF NOT EXISTS {}(age INTEGER, loc_x INTEGER, loc_y INTEGER, dim_1 INTEGER," \
-                       "dim_2 INTEGER, id INTEGER PRIMARY KEY, gender INTEGER);".format(distr_type)
+                       "dim_2 INTEGER, id INTEGER PRIMARY KEY, gender INTEGER);".format(table_name)
         self.execute_query(sample_table)
         return sample_table
 
@@ -39,7 +39,6 @@ class Database:
         try:
             cursor.execute(query)
             self.conn.commit()
-            print("Query executed successfully")
         except Error as e:
             print(e)
 
@@ -56,32 +55,42 @@ class Database:
 
     def execute_read_query(self, query):
         cursor = self.conn.cursor()
-        result = None
+        result = []
         try:
-            cursor.execute(str(query))
-            result = cursor.fetchall()
-            print(result)
+            if type(query) == str:
+                cursor.execute(str(query))
+                result = cursor.fetchall()
+            else:
+                for el in query:
+                    cursor.execute(el)
+                    result.append(cursor.fetchall()[0])
             return result
         except Error as e:
             print("The error '{}' occurred".format(e))
-            return result
+            return None
 
 
     def get_table(self, table_name):
         select_table = "SELECT * from {}".format(table_name)
         values = self.execute_read_query(select_table)
-        print(values)
-        for value in values:
-            print(value)
+        return values
 
     def delete_table(self, table_name):
         query = "DROP TABLE {}".format(table_name)
         self.execute_query(query)
 
+    def get_k_random_sample(self, table_name, k):
+        queries = []
+        for i in range(k):
+            idx = random.randint(0,1000)
+            queries.append("SELECT * from {} WHERE id = {}".format(table_name, idx))
+        return self.execute_read_query(queries)
 
 
+#
 # db = Database("dbs.db")
 # db.delete_table("type")
 # table_type = db.create_table("type")
-# db.fill_table("type", 1, 100)
+# db.fill_table("type", 1, 1000)
 # print(db.get_table("type"))
+# print(db.get_k_random_sample("type", 100))
