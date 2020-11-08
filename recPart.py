@@ -269,13 +269,6 @@ def compute_output(S, T, band_conditions):
     return output
 
 
-def draw_random_sample(R, k, S):  # Generates k random tuples, gets replaced by random sample of table function later
-    sample = []
-    for i in range(k):  # (age, loc_x, loc_y, name, 0 for S, 1 for T
-        sample.append((random.randint(0, 1000), random.randint(0, 1000), random.randint(0, 1000), i, S))
-    return sample
-
-
 def find_top_score_partition(partitions):  # should get changed to priority queue but is fast enough to n ot matter
     top_score_partition = None
     score = 0
@@ -316,14 +309,36 @@ def construct_pareto_data(size, S):
     return data
 
 
+def construct_normal_data(size, S):
+    mu, sigma = 50, 15
+    x = np.random.normal(mu, sigma, size)
+    y = np.random.normal(mu, sigma, size)
+    data = []
+    for i in range(len(x)):
+        x_tmp = min(100, x[i])
+        y_tmp = min(100, y[i])
+        data.append((x_tmp, y_tmp, 2, S))
+    return data
+
+
+def construct_uniform_data(k, S):  # Generates k random tuples, gets replaced by random sample of table function later
+    sample = []
+    for i in range(k):  # (age, loc_x, loc_y, name, 0 for S, 1 for T
+        sample.append((random.randint(0, 1000), random.randint(0, 1000), random.randint(0, 1000), i, S))
+    return sample
+
+
+
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for
     # 10 years apart, 100km ind x and y direction
 
     # choose distribution, pareto doesnt work well yet, cause no 1 bucket
-    random_sample_S = construct_pareto_data(k // 2, 0)  # draw_random_sample(S, k//2, 0)
-    random_sample_T = construct_pareto_data(k // 2, 1)  # draw_random_sample(T, k//2, 1)
-    # random_sample_S = draw_random_sample(S, k//2, 0)        #
-    # random_sample_T = draw_random_sample(T, k//2, 1)
+    # random_sample_S = construct_pareto_data(k // 2, 0)
+    random_sample_T = construct_pareto_data(k // 2, 1)
+    # random_sample_S = construct_uniform_data(k // 2, 0)
+    # random_sample_T = construct_uniform_data(k // 2, 1)
+    random_sample_S = construct_normal_data(k // 2, 0)
+    #random_sample_T = construct_normal_data(k // 2, 1)
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     print("random output sample:" + str(len(random_output_sample)))
@@ -339,7 +354,6 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     partitions.append(root_p)
     root_p.find_best_split(partitions, band_condition, w)
 
-    draw_samples(random_sample_S, random_sample_T)
 
     l_zero = load(k, len(random_output_sample), 4, 1) / w  # lower bound for worker load
     l_max = compute_max_worker_load(partitions, w)
@@ -411,11 +425,21 @@ def draw_partitions(S, T, parts):
         end_y = []
 
         for part in el:
-            partition = part.get_A()
-            start_x.append(partition[0][0])
-            end_x.append(partition[0][1])
-            start_y.append(partition[1][0])
-            end_y.append(partition[1][1])
+            if part.regular_partition:
+                partition = part.get_A()
+                start_x.append(partition[0][0])
+                end_x.append(partition[0][1])
+                start_y.append(partition[1][0])
+                end_y.append(partition[1][1])
+            else:
+                #draw small partition
+                partition = part.get_A()
+                start_x.append(partition[0][0])
+                end_x.append(partition[0][1])
+                start_y.append(partition[1][0])
+                end_y.append(partition[1][1])
+                #add lines
+                part.sub_partitions = [2, 4]
 
         width = [x1 - x2 for x1, x2 in zip(end_x, start_x)]
         height = [y1 - y2 for y1, y2 in zip(end_y, start_y)]
@@ -457,7 +481,7 @@ def draw_samples(S, T):
     show(p)
 
 if __name__ == '__main__':
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [50, 50], 1000, 10)
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [25, 25], 1000, 10)
     print(parts)
     print("-----")
     print("Min input: 1000")
