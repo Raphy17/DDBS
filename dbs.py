@@ -93,4 +93,4 @@ class Database:
 # table_type = db.create_table("type")
 # db.fill_table("type", 1, 1000)
 # print(db.get_table("type"))
-# print(db.get_k_random_sample("type", 100))
+print(db.get_k_random_sample("type", 100))

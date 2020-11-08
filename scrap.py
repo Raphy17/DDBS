@@ -70,6 +70,7 @@ def duplication_caused_by_small_partitioning(a):      #solution for n dimensiosn
         delta_dupl_all_dim.append(delta_dupl)
     return delta_dupl_all_dim
 
-s = construct_normal_data(100, 0)
-t = construct_normal_data(100, 1)
-draw_samples(s, t)
+a = []
+for i in range(2, 5):
+    a.append([])
+print(a)

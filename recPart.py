@@ -86,12 +86,14 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
         top_score = 0
         dim_best_split = 0
         dupl_best_split = 0
+        rev_whole = 0
         if len(valid_dims) > 0:  # if len == 0, its a small partition -> use 1 bucket
             Vp = per_worker_load_variance(partitions, w)  # before applying partitioning
             for dim in valid_dims:  # find best split out of all dimensions
                 best_x = 0
                 score_best_x = 0
                 dupl_best_x = 0
+                rev_dim = 0
                 self.sample_input.sort(key=lambda x: x[dim])  # sort input_sample on dimension A
                 for i in range(0, len(self.sample_input) - 1):  # find best split a single dimension
                     x = (self.sample_input[i][dim] + self.sample_input[i + 1][dim]) / 2
@@ -103,22 +105,26 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
                         len(self.sample_input) - 1 - i + delta_dup_x, (self.get_output_size()/self.get_input_size())*(len(self.sample_input) - 1 - i), 4,
                         1) ** 2) #removed duplication from adding to variance, since it's ambiguous in paper
                     delta_var_x = Vp - Vp_new
+                    rev = 0
                     if delta_dup_x == 0:
                         delta_dup_x = 1
+                        rev = 1
                     score_x = delta_var_x / delta_dup_x
                     if score_x > score_best_x:
                         score_best_x = score_x
                         best_x = x
                         dupl_best_x = delta_dup_x
+                        rev_dim = rev
                 if score_best_x > top_score:
                     top_score = score_best_x
                     best_split = best_x
                     dim_best_split = dim
                     dupl_best_split = dupl_best_x
+                    rev_whole = rev_dim
             self.top_score = top_score
             self.best_split = best_split
             self.dim_best_split = dim_best_split
-            self.delta_dupl_best_split = dupl_best_split
+            self.delta_dupl_best_split = dupl_best_split - rev_whole
             if self.top_score > 0:
                 return self.best_split, self.top_score, self.dim_best_split, self.delta_dupl_best_split
 
@@ -128,7 +134,7 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
         sigma_dim = []
         for i in range(len(delta_Var)):
             if delta_Dupl[i] == 0:
-                delta_Dupl = 1
+                delta_Dupl[i] = 1
             sigma_dim.append(delta_Var[i]/delta_Dupl[i])
 
         self.top_score = max(sigma_dim)
@@ -207,6 +213,7 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
             dupl_caused_after_increase += number_of_duplicated_small_zones/(n+1)
             delta_dupl = (dupl_caused_after_increase - dupl_caused_now)*len(self.sample_T)
             delta_dupl_all_dim.append(delta_dupl)
+        delta_dupl_all_dim
         return delta_dupl_all_dim
 
     def delta_Var_caused_by_small_partitioning(self):
@@ -296,16 +303,21 @@ def compute_max_worker_load(partitions, w):
     return max(worker_loads)
 
 
-def construct_pareto_data(size, S):
-    a, m = 1.5, 15.  # shape and mode
-    x = (np.random.pareto(a, size)) * m
-    y = (np.random.pareto(a, size)) * m
+def construct_pareto_data(size, S, dim):
+    values = []
+    a, m = 1.5, 1  # shape and mode
+    for i in range(dim):
+        x = (np.random.pareto(a, size)+1) * m
+        values.append(x)
+
     data = []
     for i in range(len(x)):
-        x_tmp = min(100000, x[i])
-        y_tmp = min(100000, y[i])
-
-        data.append((x_tmp, y_tmp, 2, 1, S))
+        t = []
+        for d in range(dim):
+            t.append(values[d][i])
+        t.append(i)
+        t.append(S)
+        data.append(tuple(t))
     return data
 
 
@@ -313,11 +325,13 @@ def construct_normal_data(size, S):
     mu, sigma = 50, 15
     x = np.random.normal(mu, sigma, size)
     y = np.random.normal(mu, sigma, size)
+    z = np.random.normal(mu, sigma, size)
     data = []
     for i in range(len(x)):
         x_tmp = min(100, x[i])
         y_tmp = min(100, y[i])
-        data.append((x_tmp, y_tmp, 2, S))
+        z_tmp = min(100, z[i])
+        data.append((x_tmp, y_tmp, z_tmp, i, S))
     return data
 
 
@@ -333,11 +347,11 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     # 10 years apart, 100km ind x and y direction
 
     # choose distribution, pareto doesnt work well yet, cause no 1 bucket
-    # random_sample_S = construct_pareto_data(k // 2, 0)
-    random_sample_T = construct_pareto_data(k // 2, 1)
+    random_sample_S = construct_pareto_data(k // 2, 0, len(band_condition))
+    random_sample_T = construct_pareto_data(k // 2, 1, len(band_condition))
     # random_sample_S = construct_uniform_data(k // 2, 0)
     # random_sample_T = construct_uniform_data(k // 2, 1)
-    random_sample_S = construct_normal_data(k // 2, 0)
+    #random_sample_S = construct_normal_data(k // 2, 0)
     #random_sample_T = construct_normal_data(k // 2, 1)
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
@@ -400,7 +414,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
         if overhead_input_dupl > overhead_worker_load:
             termination_condition = False
-            print(i)
+
         all_partitions.append(partitions.copy())
         i += 1
         if i == 200:
@@ -481,16 +495,17 @@ def draw_samples(S, T):
     show(p)
 
 if __name__ == '__main__':
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [25, 25], 1000, 10)
+    k = 800
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [20, 20, 20, 20, 20, 20, 20, 20], k, 10)
     print(parts)
     print("-----")
-    print("Min input: 1000")
+    print("Min input: " + str(k))
     print("total input:" + str(total_input))
-    print("overhead input" + str(overhead_input_dupl))
+    print("input overhead: " + str(overhead_input_dupl))
     print("---load")
     print("min wordload per machine: " + str(l_zero))
-    print("woardload of worst machine: " + str(l_max))
+    print("workload of worst machine: " + str(l_max))
     print("workload overhead: " + str(overhead_worker_load))
     print(over_head_history)
-    draw_partitions(s, t, parts)
+    #draw_partitions(s, t, parts)
 
