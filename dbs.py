@@ -64,7 +64,7 @@ class Database:
                 for el in query:
                     cursor.execute(el)
                     result.append(cursor.fetchall()[0])
-            return tuple(result)
+            return list(result)
         except Error as e:
             print("The error '{}' occurred".format(e))
             return None
@@ -79,7 +79,7 @@ class Database:
         query = "DROP TABLE {}".format(table_name)
         self.execute_query(query)
 
-    def get_k_random_sample(self, table_name, k):
+    def get_k_random_samples(self, table_name, k):
         queries = []
         for i in range(k):
             idx = random.randint(0,1000)
@@ -93,4 +93,3 @@ class Database:
 # table_type = db.create_table("type")
 # db.fill_table("type", 1, 1000)
 # print(db.get_table("type"))
-print(db.get_k_random_sample("type", 100))

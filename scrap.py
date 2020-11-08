@@ -70,7 +70,9 @@ def duplication_caused_by_small_partitioning(a):      #solution for n dimensiosn
         delta_dupl_all_dim.append(delta_dupl)
     return delta_dupl_all_dim
 
-a = []
-for i in range(2, 5):
-    a.append([])
-print(a)
+partitioning = [4, 5, 6]
+loads = [1, 2, 3]
+parts = [(partitioning[i], loads[i]) for i in range(len(loads))]
+print(parts)
+partition_to_worker = {i : [] for i in range(len(partitioning))}
+print(partition_to_worker)
