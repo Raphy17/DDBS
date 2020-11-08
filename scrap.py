@@ -13,7 +13,7 @@ def draw_random_sample(R, k, S):            #Generates k random tuples, will ger
     return sample
 
 
-def construct_pareto_data(size, S):
+def construct_pareto_data(size):
     a, m = 2.0, 15.  # shape and mode
     x = (np.random.pareto(a, size) + 1) * m
     y = (np.random.pareto(a, size) + 1) * m
@@ -22,6 +22,17 @@ def construct_pareto_data(size, S):
         x_tmp = min(100, x[i])
         y_tmp = min(100, y[i])
 
+        data.append((x_tmp, y_tmp, 2, S))
+    return data
+
+def construct_normal_data(size, S):
+    mu, sigma = 50, 15
+    x = np.random.normal(mu, sigma, 1000)
+    y = np.random.normal(mu, sigma, 1000)
+    data = []
+    for i in range(len(x)):
+        x_tmp = min(100, x[i])
+        y_tmp = min(100, y[i])
         data.append((x_tmp, y_tmp, 2, S))
     return data
 
@@ -37,7 +48,6 @@ def draw_samples(S, T):
     show(p)
 
 
-a = [3, 2]
 def duplication_caused_by_small_partitioning(a):      #solution for n dimensiosn, not only rows and cols like in paper
     delta_dupl_all_dim = []
     for i in range(len(a)):
@@ -60,4 +70,6 @@ def duplication_caused_by_small_partitioning(a):      #solution for n dimensiosn
         delta_dupl_all_dim.append(delta_dupl)
     return delta_dupl_all_dim
 
-print(duplication_caused_by_small_partitioning(a))
+s = construct_normal_data(100, 0)
+t = construct_normal_data(100, 1)
+draw_samples(s, t)
