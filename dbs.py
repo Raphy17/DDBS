@@ -36,11 +36,10 @@ class Database:
 
     def execute_query(self, query):
         cursor = self.conn.cursor()
-        try:
-            cursor.execute(query)
-            self.conn.commit()
-        except Error as e:
-            print(e)
+        cursor.execute(query)
+        self.conn.commit()
+
+
 
     def fill_table(self, table_name, gender, n):
         for i in range(n+1):
