@@ -398,10 +398,10 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
             partitions.append(p_new_1)
             partitions.append(p_new_2)
         else:   #1 bucket --> partition stays the same, just adds row/col
-
+            partitions.remove(p_max)
             p_max.apply_best_split(band_condition)
             p_max.find_best_split(partitions, band_condition, w)
-
+            partitions.append(p_max)
 
         l_max = compute_max_worker_load(partitions, w)
         overhead_worker_load = (l_max - l_zero) / l_zero
@@ -430,32 +430,35 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 def draw_partitions(S, T, parts):
     p = figure(plot_width=1000, plot_height=600)
     count = 1
-    colors = bp.viridis(len(parts))
+    colors = bp.viridis(100)
+    col = 0
     for el in parts:
         start_x = []
         end_x = []
         start_y = []
         end_y = []
+        width = []
+        height = []
+        parts = []
 
         for part in el:
-            if part.regular_partition:
-                partition = part.get_A()
-                start_x.append(partition[0][0])
-                end_x.append(partition[0][1])
-                start_y.append(partition[1][0])
-                end_y.append(partition[1][1])
-            else:
-                #draw small partition
-                partition = part.get_A()
-                start_x.append(partition[0][0])
-                end_x.append(partition[0][1])
-                start_y.append(partition[1][0])
-                end_y.append(partition[1][1])
-                #add lines
-                part.sub_partitions = [2, 4]
+            parts.append(part)
+            partition = part.get_A()
+            print("paa{}".format(partition))
+            sx = partition[0][0]
+            ex = partition[0][1]
+            sy = partition[1][0]
+            ey = partition[1][1]
+            w = abs(ex - sx)
+            h = abs(ey - sy)
+            start_x.append(sx)
+            end_x.append(ex)
+            start_y.append(sy)
+            end_y.append(ey)
+            width.append(w)
+            height.append(h)
+            col += 1
 
-        width = [x1 - x2 for x1, x2 in zip(end_x, start_x)]
-        height = [y1 - y2 for y1, y2 in zip(end_y, start_y)]
         center_x = [(x1 + x2) / 2 for x1, x2 in zip(end_x, start_x)]
         center_y = [(y1 + y2) / 2 for y1, y2 in zip(end_y, start_y)]
 
@@ -463,13 +466,38 @@ def draw_partitions(S, T, parts):
         for i in range(len(center_x)):
             part_names.append("P{}".format(count))
 
+
         p.rect(x=center_x[-1], y=center_y[-1], width=width[-1],
-               height=height[i], fill_color=colors[i], line_color=colors[i], legend_label=part_names[i],
+               height=height[i], fill_color=colors[col], line_color=colors[col], legend_label=part_names[i],
                name=part_names[i], visible=False)
+
+        part_sub = parts[-1]
+        sub_x = []
+        sub_y = []
+        print("A{}".format(part_sub.get_A()))
+        if not part_sub.regular_partition:
+            subs = part_sub.sub_partitions
+            print("subs{}".format(subs))
+
+            for j in range(1, subs[0]):
+                sub_x.append(start_x[-1]+width[-1]/subs[0]*j)
+
+            for j in range(1, subs[1]):
+                sub_y.append(start_y[-1]+height[-1]/subs[1]*j)
+
+        for e in sub_x:
+            print(e, start_y[-1], end_y[-1])
+            p.line(x=(e,e), y=(start_y[-1],end_y[-1]), line_dash='dashed', line_color="black")
+
+        for l in sub_y:
+            print(l, start_x[-1], end_y[-1])
+            p.line(x=(start_x[-1],end_x[-1]), y=(l,l), line_dash='dashed', line_color="black")
+
 
         count += 1
         p.legend.click_policy = "hide"
-        hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
+
+    hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
 
     p.add_tools(hover)
 
@@ -491,9 +519,11 @@ def draw_samples(S, T):
     for i in range(len(T)):
         p.cross(x=T[i][0], y=T[i][1], line_color="black")
 
-    show(p)
+    #show(p)
 
 if __name__ == '__main__':
+   # s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], 1000, 10)
+   # print(parts)
     k = 1000
     s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], k, 10)
     print(parts[-1])
