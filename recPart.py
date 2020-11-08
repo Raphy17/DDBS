@@ -351,8 +351,8 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     random_sample_T = construct_pareto_data(k // 2, 1, len(band_condition))
     # random_sample_S = construct_uniform_data(k // 2, 0)
     # random_sample_T = construct_uniform_data(k // 2, 1)
-    #random_sample_S = construct_normal_data(k // 2, 0)
-    #random_sample_T = construct_normal_data(k // 2, 1)
+    # random_sample_S = construct_normal_data(k // 2, 0)
+    # random_sample_T = construct_normal_data(k // 2, 1)
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     print("random output sample:" + str(len(random_output_sample)))
@@ -360,8 +360,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     partitions = []         # all partitions
     A = []          #compute initial domain dynamically
     for dim in range(len(band_condition)):  #len(band_conditions) == number of dimensions
-        A.append((0, max(random_sample_S+random_sample_T, key=lambda item:item[dim])[dim]))
-    # A = [(0, 1000), (0, 1000)]  # domain 2 dimensions
+        A.append((1, max(random_sample_S+random_sample_T, key=lambda item:item[dim])[dim]))     #change 1 to 0 for uniform&normal
 
 
     root_p = Partition(A, random_sample_S, random_sample_T, random_output_sample)
@@ -495,17 +494,24 @@ def draw_samples(S, T):
     show(p)
 
 if __name__ == '__main__':
-    k = 800
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [20, 20, 20, 20, 20, 20, 20, 20], k, 10)
-    print(parts)
+    k = 1000
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], k, 10)
+    print(parts[-1])
     print("-----")
     print("Min input: " + str(k))
     print("total input:" + str(total_input))
     print("input overhead: " + str(overhead_input_dupl))
     print("---load")
-    print("min wordload per machine: " + str(l_zero))
+    print("min workload per machine: " + str(l_zero))
     print("workload of worst machine: " + str(l_max))
     print("workload overhead: " + str(overhead_worker_load))
     print(over_head_history)
-    #draw_partitions(s, t, parts)
+    d = []
+    l = []
+    for i in over_head_history:
+        d.append(i[0])
+        l.append(i[1])
+    print(d)
+    print(l)
+    draw_partitions(s, t, parts)
 
