@@ -444,7 +444,6 @@ def draw_partitions(S, T, parts):
         for part in el:
             parts.append(part)
             partition = part.get_A()
-            print("paa{}".format(partition))
             sx = partition[0][0]
             ex = partition[0][1]
             sy = partition[1][0]
@@ -474,10 +473,8 @@ def draw_partitions(S, T, parts):
         part_sub = parts[-1]
         sub_x = []
         sub_y = []
-        print("A{}".format(part_sub.get_A()))
         if not part_sub.regular_partition:
             subs = part_sub.sub_partitions
-            print("subs{}".format(subs))
 
             for j in range(1, subs[0]):
                 sub_x.append(start_x[-1]+width[-1]/subs[0]*j)
@@ -486,11 +483,9 @@ def draw_partitions(S, T, parts):
                 sub_y.append(start_y[-1]+height[-1]/subs[1]*j)
 
         for e in sub_x:
-            print(e, start_y[-1], end_y[-1])
             p.line(x=(e,e), y=(start_y[-1],end_y[-1]), line_dash='dashed', line_color="black")
 
         for l in sub_y:
-            print(l, start_x[-1], end_y[-1])
             p.line(x=(start_x[-1],end_x[-1]), y=(l,l), line_dash='dashed', line_color="black")
 
 

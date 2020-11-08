@@ -36,8 +36,11 @@ class Database:
 
     def execute_query(self, query):
         cursor = self.conn.cursor()
-        cursor.execute(query)
-        self.conn.commit()
+        try:
+            cursor.execute(query)
+            self.conn.commit()
+        except Exception as e:
+            e
 
 
 
@@ -88,8 +91,8 @@ class Database:
 
 #
 # db = Database("dbs.db")
-# db.delete_table("type")
+# #db.delete_table("type")
 # table_type = db.create_table("type")
 # db.fill_table("type", 1, 1000)
 # print(db.get_table("type"))
-print(db.get_k_random_sample("type", 100))
+# print(db.get_k_random_sample("type", 100))
