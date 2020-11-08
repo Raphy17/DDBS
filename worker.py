@@ -41,7 +41,7 @@ class Worker():
 
     def distribute_tuples(self, workers, p_to_w, partitioning, dim, band_condition):
         all_t = self.db.get_table("table_un")
-
+        print(all_t)
         for t in all_t:
             part_of_partitions = belongs_to(t, partitioning, dim, band_condition)
             for p in part_of_partitions:
