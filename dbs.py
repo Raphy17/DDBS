@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 import random
-
+import numpy as np
 
 
 class Database:
@@ -45,16 +45,32 @@ class Database:
 
 
 
-    def fill_table(self, table_name, gender, n):
+    def fill_table_uniform(self, table_name, gender, n):
         self.size = n
         for i in range(n):
-            age = random.randint(0, 100)
+            age = random.randint(0, 1000)
             x_loc = random.randint(0, 1000)
             y_loc = random.randint(0, 1000)
             dim_1 = random.randint(0, 1000)
             dim_2 = random.randint(0, 1000)
             insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, gender*(i % 2))
             self.execute_query(insert_vals)
+
+    def fill_table_pareto(self, table_name, gender, n, z):
+        values = []
+        dim = 5
+        for i in range(dim):
+            x = (np.random.pareto(z, n)+1)
+            values.append(x)
+
+        for i in range(len(x)):
+            t = []
+            for d in range(dim):
+                t.append(values[d][i])
+
+            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, t[0], t[1], t[2],t[3],t[4], i, gender*(i % 2))
+            self.execute_query(insert_vals)
+
 
 
     def execute_read_query(self, query):

@@ -32,12 +32,12 @@ class Worker():
         self.tuples_to_join_T = []
 
 
-    def get_sample(self, k):
-        samples = self.db.get_k_random_samples("table_un", k)
+    def get_sample(self, table, k):
+        samples = self.db.get_k_random_samples(table, k)
         return samples
 
-    def distribute_tuples(self, workers, p_to_w, partitioning, dim, band_condition):
-        all_t = self.db.get_table("table_un")
+    def distribute_tuples(self, table, workers, p_to_w, partitioning, dim, band_condition):
+        all_t = self.db.get_table(table)
 
         for t in all_t:
             part_of_partitions = belongs_to(t, partitioning, dim, band_condition)

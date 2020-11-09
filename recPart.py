@@ -349,12 +349,12 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     # choose distribution, pareto doesnt work well yet, cause no 1 bucket
     # random_sample_S = construct_pareto_data(k // 2, 0, len(band_condition))
     # random_sample_T = construct_pareto_data(k // 2, 1, len(band_condition))
-    random_sample_S = construct_uniform_data(k // 2, 0)
-    random_sample_T = construct_uniform_data(k // 2, 1)
+    # random_sample_S = construct_uniform_data(k // 2, 0)
+    # random_sample_T = construct_uniform_data(k // 2, 1)
     # random_sample_S = construct_normal_data(k // 2, 0)
     # random_sample_T = construct_normal_data(k // 2, 1)
-    # random_sample_S = S
-    # random_sample_T = T
+    random_sample_S = S
+    random_sample_T = T
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
     print("random output sample:" + str(len(random_output_sample)))
@@ -522,7 +522,7 @@ if __name__ == '__main__':
    # s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], 1000, 10)
    # print(parts)
     k = 300
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [50, 50], k, 3)
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], k, 10)
     print(parts[-1])
     print("-----")
     print("Min input: " + str(k))
