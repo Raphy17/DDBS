@@ -7,7 +7,7 @@ def belongs_to(tuple, partitioning, dim, band_conditions): #returns the partitio
         for i in range(len(partitioning)):
             is_part = True
             for d in range(dim):
-                if not (partitioning[i][d][0] <= tuple[d] < partitioning[i][d][1]):
+                if not (partitioning[i][d][0] <= tuple[d] <= partitioning[i][d][1]):
                     is_part = False
             if is_part:
                 belongs_to.append(i)
@@ -19,21 +19,18 @@ def belongs_to(tuple, partitioning, dim, band_conditions): #returns the partitio
                     is_part = False
             if is_part:
                 belongs_to.append(i)
-
+    if len(belongs_to) > 1 and tuple[-1] == 0:
+        print("!!!")
     return belongs_to
 
 class Worker():
     counter_w = 0
     def __init__(self, nr):
-        self.db = self.create_db(str(nr) + "dbs.db")
+        self.db = Database(str(nr) + "dbs.db")
         self.counter_w += 1
-        self.tuples_to_join = []
+        self.tuples_to_join_S = []
+        self.tuples_to_join_T = []
 
-    def create_db(self, path):
-        db = Database(path)
-        db.create_table("table_un")
-        db.fill_table("table_un", 1, 100)
-        return db
 
     def get_sample(self, k):
         samples = self.db.get_k_random_samples("table_un", k)
@@ -41,7 +38,7 @@ class Worker():
 
     def distribute_tuples(self, workers, p_to_w, partitioning, dim, band_condition):
         all_t = self.db.get_table("table_un")
-        print(all_t)
+
         for t in all_t:
             part_of_partitions = belongs_to(t, partitioning, dim, band_condition)
             for p in part_of_partitions:
@@ -51,6 +48,22 @@ class Worker():
         w.receive(t)
 
     def receive(self, t):
-        self.tuples_to_join.append(t)
+        if t[-1] == 0:
+            self.tuples_to_join_S.append(t)
+        else:
+            self.tuples_to_join_T.append(t)
 
+    def compute_output(self, band_conditions):
+        S = self.tuples_to_join_S
+        T = self.tuples_to_join_T
+        output = []
+        for s_element in S:
+            for t_element in T:
+                joins = True
+                for i in range(len(band_conditions)):
+                    if not (abs(s_element[i] - t_element[i]) <= band_conditions[i]):
+                        joins = False
+                if joins:
+                    output.append((s_element, t_element))
+        return output
 

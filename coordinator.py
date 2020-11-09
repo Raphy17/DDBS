@@ -45,22 +45,51 @@ def distribute_partitions(partitioning, loads, w):
         partition_to_worker[p[0]] = worker
     return partition_to_worker
 
+band_condition = [50, 50]
 
-s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], 1000, 3)
-print(parts[-1])
-draw_partitions(s, t, parts)
-partitioning, loads =transform_recPart_into_partitioning(parts[-1])
-p_to_w = distribute_partitions(partitioning, loads, 3)
 worker_0 = Worker(0)
 worker_1 = Worker(1)
 worker_2 = Worker(2)
 workers = [worker_0, worker_1, worker_2]
+S = []
+T = []
+k = 900
 for w in workers:
-    w.distribute_tuples(workers, p_to_w, partitioning, 2, [5, 5])
+    ts = w.get_sample(k//3)
+    for t in ts:
+        if t[-1] == 0:
+            S.append(t)
+        else:
+            T.append(t)
 
-print(worker_0.tuples_to_join)
-print(len(worker_0.tuples_to_join))
-print(worker_1.tuples_to_join)
-print(len(worker_1.tuples_to_join))
-print(worker_2.tuples_to_join)
-print(len(worker_2.tuples_to_join))
+print(S)
+print(len(S))
+print(len(T))
+
+S, T, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(S, T, band_condition, k, 3)
+
+
+partitioning, loads = transform_recPart_into_partitioning(parts[-1])
+p_to_w = distribute_partitions(partitioning, loads, 3)
+for w in workers:
+    w.distribute_tuples(workers, p_to_w, partitioning, 2, band_condition)
+
+real_input = 0
+output = []
+for w in workers:
+    real_input += len(w.tuples_to_join_T)
+    real_input += len(w.tuples_to_join_S)
+    output.extend(w.compute_output(band_condition))
+print("-----")
+print("Min input: " + str(k))
+print("total input:" + str(total_input))
+print("input overhead: " + str(overhead_input_dupl))
+print("---load")
+print("min workload per machine: " + str(l_zero))
+print("workload of worst machine: " + str(l_max))
+print("workload overhead: " + str(overhead_worker_load))
+print("--real input--")
+print(real_input)
+
+print(len(output))
+

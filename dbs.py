@@ -11,6 +11,7 @@ class Database:
         self.counter_db += 1
         self.path = path
         self.conn = self.create_connection()
+        self.size = 3000
 
 
     def __str__(self):
@@ -45,13 +46,14 @@ class Database:
 
 
     def fill_table(self, table_name, gender, n):
-        for i in range(n+1):
+        self.size = n
+        for i in range(n):
             age = random.randint(0, 100)
             x_loc = random.randint(0, 1000)
             y_loc = random.randint(0, 1000)
             dim_1 = random.randint(0, 1000)
             dim_2 = random.randint(0, 1000)
-            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, gender)
+            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, gender*(i % 2))
             self.execute_query(insert_vals)
 
 
@@ -83,8 +85,13 @@ class Database:
 
     def get_k_random_samples(self, table_name, k):
         queries = []
+        rand_ints = []
         for i in range(k):
-            idx = random.randint(0,1000)
+            idx = random.randint(0, self.size)
+            while idx in rand_ints:
+                idx = random.randint(0, self.size)
+            rand_ints.append(idx)
+
             queries.append("SELECT * from {} WHERE id = {}".format(table_name, idx))
         return self.execute_read_query(queries)
 
