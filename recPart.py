@@ -1,62 +1,11 @@
 #recPart but duplication and load variance are not extrapolated
 
 import math
-import random
-import pandas as pd
-from math import pi
-import numpy as np
-from bokeh.io import output_file, show, save
-from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Line, HoverTool, FactorRange
-import bokeh.palettes as bp
+from visualizer import *
+from dataConstructor import *
 
 
-def load(input_size, output_size, b2, b3):
-    return (b2 * input_size + b3 * output_size)         #1:1000 = ratio sample:real
-
-
-def per_worker_load_variance(partitions, w):  # uses for beta 2, beta 3: (4, 1) (like in amazon cloud cluster)
-    Vp = (w - 1) / w ** 2
-    tmp = 0
-    for p in partitions:
-        load_of_p = p.get_load()
-        for load_sub_partition in load_of_p:
-            tmp += load_sub_partition** 2
-    Vp *= tmp
-    return Vp
-
-
-def find_dupl(a, i, band, dim):
-    dupl = 0
-    for j in range(i + 1, len(a)):
-        v_i_plus_1 = a[j][dim]
-        if a[j][-1] == 0:
-            break
-    for j in range(i, -1, -1):
-        v_i = a[j][dim]
-        if a[j][-1] == 0:
-            break
-    j = i
-    while j >= 0:
-        if v_i_plus_1 - a[j][dim] > band:
-            break
-
-        if a[j][-1] == 1:  # 1 tuple belongs to sample T, 0 tuple belong to sample S
-            dupl += 1
-        j -= 1
-
-    j = i + 1
-    while j <= len(a) - 1:
-        if a[j][dim] - v_i > band:
-            break
-        if a[j][-1] == 1:  # 1 tuple belongs to sample T, 0 tuple belong to sample S
-            dupl += 1
-        j += 1
-
-    return dupl
-
-
-class Partition:  # tuple structure: the join necessary dimensions at the front and table/sample membership(either
+class Partition:  # tuple structure: the for the join necessary dimensions at the front and table/sample membership(either
     # S/T) at the end e.g. join on age, loc_x, loc_y --> tuple (age, lox_x, loc_y, name, bla, bla, S/T)
 
     def __init__(self, A, sample_S, sample_T, sample_output):
@@ -262,18 +211,49 @@ class Partition:  # tuple structure: the join necessary dimensions at the front 
     def get_A(self):
         return self.A
 
+def load(input_size, output_size, b2, b3):
+    return (b2 * input_size + b3 * output_size)         #1:1000 = ratio sample:real
 
-def compute_output(S, T, band_conditions):
-    output = []
-    for s_element in S:
-        for t_element in T:
-            joins = True
-            for i in range(len(band_conditions)):
-                if not (abs(s_element[i] - t_element[i]) <= band_conditions[i]):
-                    joins = False
-            if joins:
-                output.append((s_element, t_element))
-    return output
+
+def per_worker_load_variance(partitions, w):  # uses for beta 2, beta 3: (4, 1) (like in amazon cloud cluster)
+    Vp = (w - 1) / w ** 2
+    tmp = 0
+    for p in partitions:
+        load_of_p = p.get_load()
+        for load_sub_partition in load_of_p:
+            tmp += load_sub_partition** 2
+    Vp *= tmp
+    return Vp
+
+
+def find_dupl(a, i, band, dim):
+    dupl = 0
+    for j in range(i + 1, len(a)):
+        v_i_plus_1 = a[j][dim]
+        if a[j][-1] == 0:
+            break
+    for j in range(i, -1, -1):
+        v_i = a[j][dim]
+        if a[j][-1] == 0:
+            break
+    j = i
+    while j >= 0:
+        if v_i_plus_1 - a[j][dim] > band:
+            break
+
+        if a[j][-1] == 1:  # 1 tuple belongs to sample T, 0 tuple belong to sample S
+            dupl += 1
+        j -= 1
+
+    j = i + 1
+    while j <= len(a) - 1:
+        if a[j][dim] - v_i > band:
+            break
+        if a[j][-1] == 1:  # 1 tuple belongs to sample T, 0 tuple belong to sample S
+            dupl += 1
+        j += 1
+
+    return dupl
 
 
 def find_top_score_partition(partitions):  # should get changed to priority queue but is fast enough to n ot matter
@@ -303,56 +283,22 @@ def compute_max_worker_load(partitions, w):
     return max(worker_loads)
 
 
-def construct_pareto_data(size, S, dim):
-    values = []
-    a, m = 1.5, 1  # shape and mode
-    for i in range(dim):
-        x = (np.random.pareto(a, size)+1) * m
-        values.append(x)
-
-    data = []
-    for i in range(len(x)):
-        t = []
-        for d in range(dim):
-            t.append(values[d][i])
-        t.append(i)
-        t.append(S)
-        data.append(tuple(t))
-    return data
-
-
-def construct_normal_data(size, S):
-    mu, sigma = 50, 15
-    x = np.random.normal(mu, sigma, size)
-    y = np.random.normal(mu, sigma, size)
-    z = np.random.normal(mu, sigma, size)
-    data = []
-    for i in range(len(x)):
-        x_tmp = min(100, x[i])
-        y_tmp = min(100, y[i])
-        z_tmp = min(100, z[i])
-        data.append((x_tmp, y_tmp, z_tmp, i, S))
-    return data
-
-
-def construct_uniform_data(k, S):  # Generates k random tuples, gets replaced by random sample of table function later
-    sample = []
-    for i in range(k):  # (age, loc_x, loc_y, name, 0 for S, 1 for T
-        sample.append((random.randint(0, 1000), random.randint(0, 1000), random.randint(0, 1000), i, S))
-    return sample
-
+def compute_output(S, T, band_conditions):
+    output = []
+    for s_element in S:
+        for t_element in T:
+            joins = True
+            for i in range(len(band_conditions)):
+                if not (abs(s_element[i] - t_element[i]) <= band_conditions[i]):
+                    joins = False
+            if joins:
+                output.append((s_element, t_element))
+    return output
 
 
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for
-    # 10 years apart, 100km ind x and y direction
 
-    # choose distribution, pareto doesnt work well yet, cause no 1 bucket
-    # random_sample_S = construct_pareto_data(k // 2, 0, len(band_condition))
-    # random_sample_T = construct_pareto_data(k // 2, 1, len(band_condition))
-    # random_sample_S = construct_uniform_data(k // 2, 0)
-    # random_sample_T = construct_uniform_data(k // 2, 1)
-    # random_sample_S = construct_normal_data(k // 2, 0)
-    # random_sample_T = construct_normal_data(k // 2, 1)
+
     random_sample_S = S
     random_sample_T = T
 
@@ -429,116 +375,29 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     return random_sample_S, random_sample_T, all_partitions[0:index_of_best_partition], total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, full_overhead_history
 
 
-def draw_partitions(S, T, parts):
-    p = figure(plot_width=1000, plot_height=600)
-    count = 1
-    colors = bp.viridis(100)
-    col = 0
-    for el in parts:
-        start_x = []
-        end_x = []
-        start_y = []
-        end_y = []
-        width = []
-        height = []
-        parts = []
-
-        for part in el:
-            parts.append(part)
-            partition = part.get_A()
-            sx = partition[0][0]
-            ex = partition[0][1]
-            sy = partition[1][0]
-            ey = partition[1][1]
-            w = abs(ex - sx)
-            h = abs(ey - sy)
-            start_x.append(sx)
-            end_x.append(ex)
-            start_y.append(sy)
-            end_y.append(ey)
-            width.append(w)
-            height.append(h)
-            col += 1
-
-        center_x = [(x1 + x2) / 2 for x1, x2 in zip(end_x, start_x)]
-        center_y = [(y1 + y2) / 2 for y1, y2 in zip(end_y, start_y)]
-
-        part_names = []
-        for i in range(len(center_x)):
-            part_names.append("P{}".format(count))
-
-
-        p.rect(x=center_x[-1], y=center_y[-1], width=width[-1],
-               height=height[i], fill_color=colors[col], line_color=colors[col], legend_label=part_names[i],
-               name=part_names[i], visible=False)
-
-        part_sub = parts[-1]
-        sub_x = []
-        sub_y = []
-        if not part_sub.regular_partition:
-            subs = part_sub.sub_partitions
-
-            for j in range(1, subs[0]):
-                sub_x.append(start_x[-1]+width[-1]/subs[0]*j)
-
-            for j in range(1, subs[1]):
-                sub_y.append(start_y[-1]+height[-1]/subs[1]*j)
-
-        for e in sub_x:
-            p.line(x=(e,e), y=(start_y[-1],end_y[-1]), line_dash='dashed', line_color="black")
-
-        for l in sub_y:
-            p.line(x=(start_x[-1],end_x[-1]), y=(l,l), line_dash='dashed', line_color="black")
-
-
-        count += 1
-        p.legend.click_policy = "hide"
-
-    hover = HoverTool(tooltips=[("name", "$name"), ("x", "$x"), ("y", "$y")])
-
-    p.add_tools(hover)
-
-    for i in range(len(S)):
-        p.cross(x=S[i][0], y=S[i][1], line_color="blue")
-
-    for i in range(len(T)):
-        p.cross(x=T[i][0], y=T[i][1], line_color="black")
-
-    show(p)
-
-
-def draw_samples(S, T):
-    p = figure(plot_width=1000, plot_height=600)
-    count = 1
-    for i in range(len(S)):
-        p.cross(x=S[i][0], y=S[i][1], line_color="blue")
-
-    for i in range(len(T)):
-        p.cross(x=T[i][0], y=T[i][1], line_color="black")
-
-    #show(p)
-
 if __name__ == '__main__':
-   # s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], 1000, 10)
-   # print(parts)
-    k = 300
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(1, 2, [5, 5], k, 10)
+    w = 5                       #nr of workers
+    k = 500                     #sample size
+    band_condition = [2, 2]     #band condition
+    #choose distribution: pareto, uniform or normal
+    # random_sample_S = construct_pareto_data(k // 2, 1.5, 0, len(band_condition))    #size, z, S/T, dim
+    # random_sample_T = construct_pareto_data(k // 2, 1.5, 1, len(band_condition))
+    # random_sample_S = construct_uniform_data(k // 2, 0)
+    # random_sample_T = construct_uniform_data(k // 2, 1)
+    random_sample_S = construct_normal_data(k // 2, 0)
+    random_sample_T = construct_normal_data(k // 2, 1)
+
+    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(random_sample_S, random_sample_T, band_condition, k, w)
     print(parts[-1])
-    print("-----")
-    print("Min input: " + str(k))
-    print("total input:" + str(total_input))
+    print("---duplication")
+    print("Input before duplication: " + str(k))
+    print("Total input:" + str(total_input))
     print("input overhead: " + str(overhead_input_dupl))
-    print("---load")
-    print("min workload per machine: " + str(l_zero))
-    print("workload of worst machine: " + str(l_max))
-    print("workload overhead: " + str(overhead_worker_load))
+    print("---worker load")
+    print("min worker load per machine: " + str(l_zero))
+    print("worker load of worst machine: " + str(l_max))
+    print("worker load overhead: " + str(overhead_worker_load))
     print(over_head_history)
-    d = []
-    l = []
-    for i in over_head_history:
-        d.append(i[0])
-        l.append(i[1])
-    print(d)
-    print(l)
+
     draw_partitions(s, t, parts)
 
