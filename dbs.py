@@ -72,7 +72,6 @@ class Database:
             self.execute_query(insert_vals)
 
 
-
     def execute_read_query(self, query):
         cursor = self.conn.cursor()
         result = []
