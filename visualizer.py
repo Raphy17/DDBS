@@ -4,9 +4,10 @@ from bokeh.models import ColumnDataSource, Line, HoverTool, FactorRange
 import bokeh.palettes as bp
 
 def draw_partitions(S, T, parts):
+    print(len(parts))
     p = figure(plot_width=1000, plot_height=600)
     count = 1
-    colors = bp.viridis(100)
+    colors = bp.viridis(len(parts)+1)
     col = 0
     for el in parts:
         start_x = []
@@ -16,7 +17,7 @@ def draw_partitions(S, T, parts):
         width = []
         height = []
         parts = []
-
+        col += 1
         for part in el:
             parts.append(part)
             partition = part.get_A()
@@ -32,7 +33,6 @@ def draw_partitions(S, T, parts):
             end_y.append(ey)
             width.append(w)
             height.append(h)
-            col += 1
 
         center_x = [(x1 + x2) / 2 for x1, x2 in zip(end_x, start_x)]
         center_y = [(y1 + y2) / 2 for y1, y2 in zip(end_y, start_y)]
@@ -41,7 +41,7 @@ def draw_partitions(S, T, parts):
         for i in range(len(center_x)):
             part_names.append("P{}".format(count))
 
-
+        print(col)
         p.rect(x=center_x[-1], y=center_y[-1], width=width[-1],
                height=height[i], fill_color=colors[col], line_color=colors[col], legend_label=part_names[i],
                name=part_names[i], visible=False)
