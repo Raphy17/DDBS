@@ -91,4 +91,6 @@ def belongs_to(tuple, partitioning, dim, band_conditions): #returns the partitio
                 belongs_to.append(i)
     return belongs_to
 
-print(belongs_to((5, 5, 0), [((0, 10), (0, 10)), ((0, 10), (0, 10))], 2, [3, 3]))
+a = (1, 2, 3)
+
+print(a[1])

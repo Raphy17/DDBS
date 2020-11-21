@@ -324,8 +324,8 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
     all_partitions = []
     all_partitions.append(partitions.copy())
-    over_head_history = []
-    over_head_history.append(max(overhead_input_dupl, overhead_worker_load))
+    overhead_history = []
+    overhead_history.append(max(overhead_input_dupl, overhead_worker_load))
     full_overhead_history = []
     full_overhead_history.append((overhead_input_dupl, overhead_worker_load))
 
@@ -357,7 +357,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
 
         full_overhead_history.append((overhead_input_dupl, overhead_worker_load))       #jsut to collect data
-        over_head_history.append(max(overhead_input_dupl, overhead_worker_load))
+        overhead_history.append(max(overhead_input_dupl, overhead_worker_load))
 
         if overhead_input_dupl > overhead_worker_load:
             termination_condition = False
@@ -366,13 +366,16 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         i += 1
         if i == 200:
             break
-    print("iteration")
-    print(i)
+    print("iterations: " + str(i))
 
-    best_partition_overhead = min(over_head_history)
-    index_of_best_partition = over_head_history.index(best_partition_overhead)
+    best_partition_overhead = min(overhead_history)
+    index_of_best_partition = overhead_history.index(best_partition_overhead)
 
-    return random_sample_S, random_sample_T, all_partitions[0:index_of_best_partition], total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, full_overhead_history
+    best_partitioning = all_partitions[index_of_best_partition]
+
+    statistics = (all_partitions[0:index_of_best_partition], total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, full_overhead_history)
+
+    return best_partitioning, statistics
 
 
 if __name__ == '__main__':
@@ -387,7 +390,8 @@ if __name__ == '__main__':
     random_sample_S = construct_normal_data(k // 2, 0)
     random_sample_T = construct_normal_data(k // 2, 1)
 
-    s, t, parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart(random_sample_S, random_sample_T, band_condition, k, w)
+    best_partitioning, statistics = recPart(random_sample_S, random_sample_T, band_condition, k, w)
+    parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics
     print(parts[-1])
     print("---duplication")
     print("Input before duplication: " + str(k))
@@ -399,5 +403,5 @@ if __name__ == '__main__':
     print("worker load overhead: " + str(overhead_worker_load))
     print(over_head_history)
 
-    draw_partitions(s, t, parts)
+    draw_partitions(random_sample_S, random_sample_T, parts)
 
