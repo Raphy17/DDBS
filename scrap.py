@@ -70,7 +70,27 @@ def duplication_caused_by_small_partitioning(a):      #solution for n dimensiosn
         delta_dupl_all_dim.append(delta_dupl)
     return delta_dupl_all_dim
 
-a = []
-for i in range(2, 5):
-    a.append([])
-print(a)
+def belongs_to(tuple, partitioning, dim, band_conditions): #returns the partition into which the tuple belong
+    belongs_to = []
+
+    if tuple[-1] == 0: #S tuple
+        for i in range(len(partitioning)):
+            is_part = True
+            for d in range(dim):
+                if not (partitioning[i][d][0] <= tuple[d] <= partitioning[i][d][1]):
+                    is_part = False
+            if is_part:
+                belongs_to.append(i)
+    else:
+        for i in range(len(partitioning)):
+            is_part = True
+            for d in range(dim):
+                if not (partitioning[i][d][0] - band_conditions[d] <= tuple[d] < partitioning[i][d][1] + band_conditions[d]):
+                    is_part = False
+            if is_part:
+                belongs_to.append(i)
+    return belongs_to
+
+a = (1, 2, 3)
+
+print(a[1])

@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 import random
-
+import numpy as np
 
 
 class Database:
@@ -11,6 +11,7 @@ class Database:
         self.counter_db += 1
         self.path = path
         self.conn = self.create_connection()
+        self.size = 3000
 
 
     def __str__(self):
@@ -44,15 +45,32 @@ class Database:
 
 
 
-    def fill_table(self, table_name, gender, n):
-        for i in range(n+1):
-            age = random.randint(0, 100)
+    def fill_table_uniform(self, table_name, gender, n):
+        self.size = n
+        for i in range(n):
+            age = random.randint(0, 1000)
             x_loc = random.randint(0, 1000)
             y_loc = random.randint(0, 1000)
             dim_1 = random.randint(0, 1000)
             dim_2 = random.randint(0, 1000)
-            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, gender)
+            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, gender*(i % 2))
             self.execute_query(insert_vals)
+
+    def fill_table_pareto(self, table_name, gender, n, z):
+        values = []
+        dim = 5
+        for i in range(dim):
+            x = (np.random.pareto(z, n)+1)
+            values.append(x)
+
+        for i in range(len(x)):
+            t = []
+            for d in range(dim):
+                t.append(values[d][i])
+
+            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, t[0], t[1], t[2],t[3],t[4], i, gender*(i % 2))
+            self.execute_query(insert_vals)
+
 
 
     def execute_read_query(self, query):
@@ -66,7 +84,7 @@ class Database:
                 for el in query:
                     cursor.execute(el)
                     result.append(cursor.fetchall()[0])
-            return tuple(result)
+            return list(result)
         except Error as e:
             print("The error '{}' occurred".format(e))
             return None
@@ -81,10 +99,15 @@ class Database:
         query = "DROP TABLE {}".format(table_name)
         self.execute_query(query)
 
-    def get_k_random_sample(self, table_name, k):
+    def get_k_random_samples(self, table_name, k):
         queries = []
+        rand_ints = []
         for i in range(k):
-            idx = random.randint(0,1000)
+            idx = random.randint(0, self.size)
+            while idx in rand_ints:
+                idx = random.randint(0, self.size)
+            rand_ints.append(idx)
+
             queries.append("SELECT * from {} WHERE id = {}".format(table_name, idx))
         return self.execute_read_query(queries)
 
@@ -95,4 +118,4 @@ class Database:
 # table_type = db.create_table("type")
 # db.fill_table("type", 1, 1000)
 # print(db.get_table("type"))
-# print(db.get_k_random_sample("type", 100))
+
