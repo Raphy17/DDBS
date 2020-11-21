@@ -8,7 +8,7 @@ def construct_pareto_data(size, z, S, dim):
         values.append(x)
 
     data = []
-    for i in range(len(x)):
+    for i in range(size):
         t = []
         for d in range(dim):
             t.append(values[d][i])
@@ -18,17 +18,20 @@ def construct_pareto_data(size, z, S, dim):
     return data
 
 
-def construct_normal_data(size, S):
-    mu, sigma = 50, 15
-    x = np.random.normal(mu, sigma, size)
-    y = np.random.normal(mu, sigma, size)
-    z = np.random.normal(mu, sigma, size)
+def construct_normal_data(size, mu, sigma, S, dim):
+    values = []
+    for i in range(dim):
+        x = np.random.normal(mu, sigma, size)
+        values.append(x)
+
     data = []
-    for i in range(len(x)):
-        x_tmp = min(100, x[i])
-        y_tmp = min(100, y[i])
-        z_tmp = min(100, z[i])
-        data.append((x_tmp, y_tmp, z_tmp, i, S))
+    for i in range(size):
+        t = []
+        for d in range(dim):
+            t.append(values[d][i])
+        t.append(i)
+        t.append(S)
+        data.append(tuple(t))
     return data
 
 

@@ -383,12 +383,12 @@ if __name__ == '__main__':
     k = 500                     #sample size
     band_condition = [2, 2]     #band condition
     #choose distribution: pareto, uniform or normal
-    # random_sample_S = construct_pareto_data(k // 2, 1.5, 0, len(band_condition))    #size, z, S/T, dim
+    # random_sample_S = construct_pareto_data(k // 2, 1.5, 0, len(band_condition))      #size, z, S/T, dim
     # random_sample_T = construct_pareto_data(k // 2, 1.5, 1, len(band_condition))
     # random_sample_S = construct_uniform_data(k // 2, 0)
     # random_sample_T = construct_uniform_data(k // 2, 1)
-    random_sample_S = construct_normal_data(k // 2, 0)
-    random_sample_T = construct_normal_data(k // 2, 1)
+    random_sample_S = construct_normal_data(k // 2, 50, 15, 0, len(band_condition))                          #size, mu, sigma, S/T, dim
+    random_sample_T = construct_normal_data(k // 2, 50, 15, 1, len(band_condition))
 
     best_partitioning, statistics = recPart(random_sample_S, random_sample_T, band_condition, k, w)
     parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics
