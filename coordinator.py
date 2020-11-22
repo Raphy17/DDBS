@@ -133,9 +133,10 @@ if __name__ == '__main__':
     #CALCULATE TIME OF SLOWEST WORKER
     #END TOTAL TIME JOIN COMPUTATION
 
-    #SHOW SOME TIME STATISTICS
+    #CALCULATRE/SHOW SOME TIME STATISTICS
 
 
+    #GETTING SOME STATISTICS
     parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics
     #calculates duplication
     real_input = 0
