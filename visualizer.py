@@ -41,7 +41,7 @@ def draw_partitions(S, T, parts):
         for i in range(len(center_x)):
             part_names.append("P{}".format(count))
 
-        print(col)
+
         p.rect(x=center_x[-1], y=center_y[-1], width=width[-1],
                height=height[i], fill_color=colors[col], line_color=colors[col], legend_label=part_names[i],
                name=part_names[i], visible=False)
@@ -90,4 +90,4 @@ def draw_samples(S, T):
     for i in range(len(T)):
         p.cross(x=T[i][0], y=T[i][1], line_color="black")
 
-    #show(p)
+    show(p)
