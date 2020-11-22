@@ -2,6 +2,21 @@ from recPart import *
 from worker import *
 
 
+def get_regions(regions, region, s_e, d):
+    if d == len(s_e):
+        regions.append(region)
+        return
+    elif d == 0:
+        for r in s_e[0]:
+            region = [r, ]
+            get_regions(regions, region, s_e, d+1)
+        return
+    else:
+        for r in s_e[d]:
+            n_r = region.copy()
+            n_r.append(r)
+            get_regions(regions, n_r, s_e, d+1)
+
 
 def transform_recPart_into_partitioning(partitions):
     partitioning = []
@@ -14,20 +29,22 @@ def transform_recPart_into_partitioning(partitions):
             partitioning.append(tuple(part))
             loads.append(p.get_load()[0])
         else:
+            start_endpoints = []
             lengths = []
             for d in p.A:
                 lengths.append(d[1] - d[0])
-            regions = []
-            n = p.nr_of_regions
-            for i in range(n):
-                regions.append([])
+                start_endpoints.append([])
             for d in range(len(lengths)):
                 for i in range(p.sub_partitions[d]):
+                    start_endpoints[d].append((p.A[d][0] + i * lengths[d]/p.sub_partitions[d], p.A[d][0] + (i+1) * lengths[d]/p.sub_partitions[d]))
+            print(start_endpoints)
 
-                    for j in range(i*(n//p.sub_partitions[d]), (i+1)*(n//p.sub_partitions[d])):
-                        regions[j].append((p.A[d][0] + i * lengths[d]/p.sub_partitions[d], p.A[d][0] + (i+1) * lengths[d]/p.sub_partitions[d]))
+            regions = []
+            get_regions(regions, [], start_endpoints, 0)
+
             for region in regions:
-
+                if tuple(region) in partitioning:
+                    print("KKK")
                 partitioning.append(tuple(region))
                 loads.append(p.get_load()[0])
     return partitioning, loads
@@ -76,35 +93,47 @@ if __name__ == '__main__':
     #creating a worker for each Database
     workers = create_workers(nr_w)
 
+    #START TIME REC PART
+
     # Getting input sample for recPart algorithm from workers
     S, T = get_input_sample_from_workers(workers)
 
     best_partitioning, statistics = recPart(S, T, band_condition, k, nr_w)
-
     partitioning, loads = transform_recPart_into_partitioning(best_partitioning)
     p_to_w = distribute_partitions(loads, nr_w)
 
+    #END TIME REC PART
+
+    #visualizing, can be commented out (shows only first 2 dimensions)
+    draw_partitions(S, T, statistics[0])
+
+
+    #START TOTAL TIME DISTRIBUTION
     for p in p_to_w.keys():
         workers[p_to_w[p]].initialize_tuples_to_join(p)
 
-    (print("parts"))
-    print(p_to_w)
-    print(loads)
-    print(partitioning)
-    draw_partitions(S, T, statistics[0])
-
     #coordinator tells worker where to send their tuples
-
-
     for w in workers:
+        #START SINGLE TIME DISTRIBUTION
         w.distribute_tuples("table_pareto15", workers, p_to_w, partitioning, len(band_condition), band_condition)
+        #END SINGLE TIME DISTRIBUTION
 
-    #start total time here
+    #CALCULATE SLOWEST WORKER
+
+    #END TOTAL TIME DISTRIBUTION
+
+
+    #START TOTAL TIME JOIN COMPUTATION
     output = []
     for w in workers:
+        #START SINGLE TIME JOIN COMPUTATION
         output.extend(w.compute_output(band_condition))
-    #end total time here
-    #calculate time of slowest worker here
+        #END SINGLE TIME JOIN COMPUTATION
+
+    #CALCULATE TIME OF SLOWEST WORKER
+    #END TOTAL TIME JOIN COMPUTATION
+
+    #SHOW SOME TIME STATISTICS
 
 
     parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics

@@ -9,8 +9,8 @@ def belongs_to(tuple, partitioning, dim, band_conditions): #returns the partitio
             for d in range(dim):
                 lower_b = partitioning[i][d][0]
                 upper_b = partitioning[i][d][1]
-                if lower_b == 1:        #this distributions in [1, infinity]
-                    lower_b = 0
+                if lower_b == 1:        #needs to be changed for normal distributions (works for domain : [1, infinity])
+                    lower_b = 0.999
                 if not (lower_b < tuple[d] <= upper_b):
                     is_part = False
             if is_part:
@@ -62,7 +62,6 @@ class Worker():
             self.tuples_to_join_T[p].append(t)
 
     def compute_output(self, band_conditions):
-        #add time here
         output = []
         for partition in self.tuples_to_join_S.keys():
             S = self.tuples_to_join_S[partition]
@@ -75,6 +74,5 @@ class Worker():
                             joins = False
                     if joins:
                         output.append((s_element, t_element))
-        #add time here
         return output
 

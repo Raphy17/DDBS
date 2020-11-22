@@ -6,6 +6,7 @@ from bokeh.models import ColumnDataSource, Line, HoverTool, FactorRange
 import bokeh.palettes as bp
 
 
+
 def draw_random_sample(R, k, S):            #Generates k random tuples, will ger replaced by random sample of table function later
     sample = []
     for i in range(100):
@@ -91,6 +92,24 @@ def belongs_to(tuple, partitioning, dim, band_conditions): #returns the partitio
                 belongs_to.append(i)
     return belongs_to
 
-a = (1, 2, 3)
 
-print(13.617 < 1.6404 <= 119.9)
+def get_regions(regions, region, s_e, d):
+    if d == len(s_e):
+        regions.append(region)
+        return
+    elif d == 0:
+        for r in s_e[0]:
+            region = [r, ]
+            get_regions(regions, region, s_e, d+1)
+        return
+    else:
+        for r in s_e[d]:
+            n_r = region.copy()
+            n_r.append(r)
+            get_regions(regions, n_r, s_e, d+1)
+
+s_e = [[(0, 1), (1, 2)], [(0, 1), (1, 2), (2, 3)], [(0, 5),]]
+regions = []
+get_regions(regions, [], s_e, 0)
+print(regions)
+
