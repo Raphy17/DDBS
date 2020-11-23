@@ -1,3 +1,7 @@
+import time
+from humanize import precisedelta
+from datetime import timedelta
+
 from recPart import *
 from worker import *
 
@@ -93,7 +97,7 @@ if __name__ == '__main__':
     #creating a worker for each Database
     workers = create_workers(nr_w)
 
-    #START TIME REC PART
+    start_time_rec_part = time.time()
 
     # Getting input sample for recPart algorithm from workers
     S, T = get_input_sample_from_workers(workers)
@@ -102,39 +106,45 @@ if __name__ == '__main__':
     partitioning, loads = transform_recPart_into_partitioning(best_partitioning)
     p_to_w = distribute_partitions(loads, nr_w)
 
-    #END TIME REC PART
+    end_time_rec_part = time.time()
 
     #visualizing, can be commented out (shows only first 2 dimensions)
     draw_partitions(S, T, statistics[0])
 
-
-    #START TOTAL TIME DISTRIBUTION
+    start_total_time_distribution = time.time()
     for p in p_to_w.keys():
         workers[p_to_w[p]].initialize_tuples_to_join(p)
 
     #coordinator tells worker where to send their tuples
+    single_time_distributions = []
     for w in workers:
-        #START SINGLE TIME DISTRIBUTION
+        start_single_time_distribution = time.time()
         w.distribute_tuples("table_pareto15", workers, p_to_w, partitioning, len(band_condition), band_condition)
-        #END SINGLE TIME DISTRIBUTION
+        end_single_time_distribution = time.time()
+        single_time_distributions.append(end_single_time_distribution-start_single_time_distribution)
 
-    #CALCULATE SLOWEST WORKER
+    slowest_single_time_distribution = max(single_time_distributions)
 
-    #END TOTAL TIME DISTRIBUTION
+    end_total_time_distribution = time.time()
 
-
-    #START TOTAL TIME JOIN COMPUTATION
+    start_total_time_join = time.time()
     output = []
+    single_time_join = []
     for w in workers:
-        #START SINGLE TIME JOIN COMPUTATION
+        start_single_time_join = time.time()
         output.extend(w.compute_output(band_condition))
-        #END SINGLE TIME JOIN COMPUTATION
+        end_single_time_join = time.time()
+        single_time_join.append(end_single_time_join - start_single_time_join)
 
-    #CALCULATE TIME OF SLOWEST WORKER
-    #END TOTAL TIME JOIN COMPUTATION
+    end_total_time_join = time.time()
+    slowest_single_time_join = max(single_time_join)
 
     #CALCULATRE/SHOW SOME TIME STATISTICS
-
+    print("Duration rec part: ", precisedelta(timedelta(seconds=end_time_rec_part - start_time_rec_part)))
+    print("Total time distribution: ", precisedelta(timedelta(seconds=end_total_time_distribution - start_total_time_distribution)))
+    print("Slowest time single distribution: ", precisedelta(timedelta(seconds=slowest_single_time_distribution)))
+    print("Total time join: ", precisedelta(timedelta(seconds=end_total_time_join - start_total_time_join)))
+    print("Slowest time single distribution: ", precisedelta(timedelta(seconds=slowest_single_time_join)))
 
     #GETTING SOME STATISTICS
     parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics
@@ -157,7 +167,6 @@ if __name__ == '__main__':
     print("input before dupl:" + str(nr_w*3000))
     print("real input:" + str(real_input))
     print(len(output))
-
 
     #draws only the first 2 dimensions of the partitions, mighjt look strange
 
