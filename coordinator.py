@@ -180,7 +180,7 @@ if __name__ == '__main__':
     band_condition = [2, 2, 2]      #band join predicate
     nr_w = 5                        #number of workers
     sample_size = 500               #sample size (best to choose something divisible by nr_w)
-    size = 2000                     #size of tables per Database (dbs are filled up to 10'000 at the moment)
+    size = 2000                     #size of table per Database (first 5 dbs are fille up to 20'000 at the moment, last 5 up to 10'000)
 
     output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
 

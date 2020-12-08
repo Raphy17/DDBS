@@ -11,7 +11,7 @@ class Database:
         self.counter_db += 1
         self.path = path
         self.conn = self.create_connection()
-        self.size = 3000
+        self.size = 20000
 
 
     def __str__(self):
@@ -45,18 +45,18 @@ class Database:
 
 
 
-    def fill_table_uniform(self, table_name, gender, n):
+    def fill_table_uniform(self, table_name, n):
         self.size = n
         for i in range(n):
-            age = random.randint(0, 1000)
-            x_loc = random.randint(0, 1000)
-            y_loc = random.randint(0, 1000)
-            dim_1 = random.randint(0, 1000)
-            dim_2 = random.randint(0, 1000)
-            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, gender*(i % 2))
+            age = random.randint(1, 1000)
+            x_loc = random.randint(1, 1000)
+            y_loc = random.randint(1, 1000)
+            dim_1 = random.randint(1, 1000)
+            dim_2 = random.randint(1, 1000)
+            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, age, x_loc, y_loc, dim_1, dim_2, i, i % 2)
             self.execute_query(insert_vals)
 
-    def fill_table_pareto(self, table_name, gender, n, z):
+    def fill_table_pareto(self, table_name, n, z):
         values = []
         dim = 5
         for i in range(dim):
@@ -68,7 +68,7 @@ class Database:
             for d in range(dim):
                 t.append(values[d][i])
 
-            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, t[0], t[1], t[2],t[3],t[4], i, gender*(i % 2))
+            insert_vals = "INSERT INTO {} VALUES({},{},{},{},{},{},{})".format(table_name, t[0], t[1], t[2],t[3],t[4], i, i % 2)
             self.execute_query(insert_vals)
 
 
