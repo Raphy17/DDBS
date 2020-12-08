@@ -61,11 +61,11 @@ def create_workers(nr_w, size):
     return workers
 
 
-def get_input_sample_from_workers(workers):
+def get_input_sample_from_workers(workers, sample_size):
     S = []
     T = []
     for w in workers:
-        ts = w.get_sample("table_pareto15", sample_size // nr_w)
+        ts = w.get_sample("table_pareto15", sample_size // len(workers))
         for t in ts:
             if t[-1] == 0:
                 S.append(t)
@@ -94,7 +94,7 @@ def coordinate_join(band_condition, nr_w, sample_size, size):
     start_time_rec_part = time.time()
 
     # Getting input sample for recPart algorithm from workers
-    S, T = get_input_sample_from_workers(workers)
+    S, T = get_input_sample_from_workers(workers, sample_size)
 
     best_partitioning, recPart_statistics = recPart(S, T, band_condition, sample_size, nr_w)
     partitioning, loads = transform_recPart_into_partitioning(best_partitioning)
@@ -180,8 +180,8 @@ def coordinate_join(band_condition, nr_w, sample_size, size):
 if __name__ == '__main__':
 
     band_condition = [2, 2, 2]      #band join predicate
-    nr_w = 5                        #number of workers
-    sample_size = 500               #sample size (best to choose something divisible by nr_w)
+    nr_w = 10                        #number of workers
+    sample_size = 1000               #sample size (best to choose something divisible by nr_w)
     size = 2000                     #size of table per Database (first 5 dbs are fille up to 20'000 at the moment, last 5 up to 10'000)
 
     output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
