@@ -137,16 +137,18 @@ def coordinate_join(band_condition, nr_w, sample_size, size):
     for w in workers:
         real_input += w.get_join_input_size()
         real_loads.append(w.get_load())
-    min_real_workload_per_machine = (4*nr_w*size + len(output))/nr_w
+    min_real_workload_per_machine = (4*nr_w*real_input + len(output))/nr_w
     workload_of_worst_machine = max(real_loads)
 
-    #recPart, total Distribution, slowest distribution, total join, slowest join
+    #recPart, total Distribution, slowest distribution, total join, slowest join, total time, %recpart
     time_statistics = []
     time_statistics.append(end_time_rec_part - start_time_rec_part)
     time_statistics.append(end_total_time_distribution - start_total_time_distribution)
     time_statistics.append(slowest_single_time_distribution)
     time_statistics.append(end_total_time_join - start_total_time_join)
     time_statistics.append(slowest_single_time_join)
+    time_statistics.append((time_statistics[0]+time_statistics[2]+time_statistics[4]))
+    time_statistics.append(time_statistics[0]/time_statistics[5])
 
     #
     dupl_statistics = []
@@ -192,6 +194,8 @@ if __name__ == '__main__':
     print("Slowest time single distribution: ", precisedelta(timedelta(seconds=statistics[0][2])))
     print("Total time join: ", precisedelta(timedelta(seconds=statistics[0][3])))
     print("Slowest time single join: ", precisedelta(timedelta(seconds=statistics[0][4])))
+    print("Total time: ", precisedelta(timedelta(seconds=statistics[0][5])))
+    print("Percentage of time spent in recPart: ", statistics[0][6])
 
     print("---duplication statistics")
     print("Sample input before duplication: " + str(statistics[1][0]))
