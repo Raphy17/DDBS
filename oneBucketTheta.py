@@ -12,8 +12,8 @@ def theta_join(S, T, join_condition=lambda s, t: s == t):
 
     """
     ct, cs, height, width = _create_partitioning_rectangles(S, T)
-    S = S.map(lambda (k, v): (k, (1, v)))
-    T = T.map(lambda (k, v): (k, (2, v)))
+    S = S.map(lambda k, v: (k, (1, v)))
+    T = T.map(lambda k, v: (k, (2, v)))
     dispatch = reducer(join_condition)
     mapper = region_map(ct, cs, height, width)
     D = S.union(T).flatMap(mapper).groupByKey().flatMap(dispatch)
