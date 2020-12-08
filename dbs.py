@@ -98,13 +98,24 @@ class Database:
         query = "DROP TABLE {}".format(table_name)
         self.execute_query(query)
 
-    def get_k_random_samples(self, table_name, k):
+    def get_all_tuples(self, table_name, size):
+        if size > self.size:
+            size = self.size
+        queries = []
+        for i in range(size):
+
+            queries.append("SELECT * from {} WHERE id = {}".format(table_name, i))
+        return self.execute_read_query(queries)
+
+    def get_k_random_samples(self, table_name, k, size):
+        if size > self.size:
+            size = self.size
         queries = []
         rand_ints = []
         for i in range(k):
-            idx = random.randint(0, self.size)
+            idx = random.randint(0, size)
             while idx in rand_ints:
-                idx = random.randint(0, self.size)
+                idx = random.randint(0, size)
             rand_ints.append(idx)
 
             queries.append("SELECT * from {} WHERE id = {}".format(table_name, idx))

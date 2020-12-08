@@ -41,7 +41,6 @@ def transform_recPart_into_partitioning(partitions):
             for d in range(len(lengths)):
                 for i in range(p.sub_partitions[d]):
                     start_endpoints[d].append((p.A[d][0] + i * lengths[d]/p.sub_partitions[d], p.A[d][0] + (i+1) * lengths[d]/p.sub_partitions[d]))
-            print(start_endpoints)
 
             regions = []
             get_regions(regions, [], start_endpoints, 0)
@@ -54,10 +53,10 @@ def transform_recPart_into_partitioning(partitions):
     return partitioning, loads
 
 
-def create_workers(nr_w):
+def create_workers(nr_w, size):
     workers = []
     for i in range(nr_w):
-        worker = Worker(i)
+        worker = Worker(i, size)
         workers.append(worker)
     return workers
 
@@ -66,7 +65,7 @@ def get_input_sample_from_workers(workers):
     S = []
     T = []
     for w in workers:
-        ts = w.get_sample("table_pareto15", k // nr_w)
+        ts = w.get_sample("table_pareto15", sample_size // nr_w)
         for t in ts:
             if t[-1] == 0:
                 S.append(t)
@@ -80,36 +79,28 @@ def distribute_partitions(loads, w):
     partition_to_worker = {}
     parts = [(i, loads[i]) for i in range(len(loads))]
     parts.sort(key=lambda x: x[1], reverse=True)
-    print(parts)
+
     for p in parts:
         worker = worker_loads.index(min(worker_loads))
         worker_loads[worker] += p[1]
         partition_to_worker[p[0]] = worker
     return partition_to_worker
 
-
-if __name__ == '__main__':
-
-    band_condition = [2, 2, 2]     #band join predicate
-    nr_w = 5                  #number of workers
-    k = 100                     #sample size (best to choose something divisible by nr_w)
+def coordinate_join(band_condition, nr_w, sample_size, size):
 
     #creating a worker for each Database
-    workers = create_workers(nr_w)
+    workers = create_workers(nr_w, size)
 
     start_time_rec_part = time.time()
 
     # Getting input sample for recPart algorithm from workers
     S, T = get_input_sample_from_workers(workers)
 
-    best_partitioning, statistics = recPart(S, T, band_condition, k, nr_w)
+    best_partitioning, recPart_statistics = recPart(S, T, band_condition, sample_size, nr_w)
     partitioning, loads = transform_recPart_into_partitioning(best_partitioning)
     p_to_w = distribute_partitions(loads, nr_w)
 
     end_time_rec_part = time.time()
-
-    #visualizing, can be commented out (shows only first 2 dimensions)
-    draw_partitions(S, T, statistics[0])
 
     start_total_time_distribution = time.time()
     for p in p_to_w.keys():
@@ -139,34 +130,87 @@ if __name__ == '__main__':
     end_total_time_join = time.time()
     slowest_single_time_join = max(single_time_join)
 
-    #CALCULATRE/SHOW SOME TIME STATISTICS
-    print("Duration rec part: ", precisedelta(timedelta(seconds=end_time_rec_part - start_time_rec_part)))
-    print("Total time distribution: ", precisedelta(timedelta(seconds=end_total_time_distribution - start_total_time_distribution)))
-    print("Slowest time single distribution: ", precisedelta(timedelta(seconds=slowest_single_time_distribution)))
-    print("Total time join: ", precisedelta(timedelta(seconds=end_total_time_join - start_total_time_join)))
-    print("Slowest time single distribution: ", precisedelta(timedelta(seconds=slowest_single_time_join)))
-
-    #GETTING SOME STATISTICS
-    parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics
-    #calculates duplication
+    #calculating some statistics
+    parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = recPart_statistics
     real_input = 0
+    real_loads = []
     for w in workers:
-        for key in w.tuples_to_join_S:
-            real_input += len(w.tuples_to_join_S[key])
-            real_input += len(w.tuples_to_join_T[key])
+        real_input += w.get_join_input_size()
+        real_loads.append(w.get_load())
+    min_real_workload_per_machine = (4*nr_w*size + len(output))/nr_w
+    workload_of_worst_machine = max(real_loads)
+
+    #recPart, total Distribution, slowest distribution, total join, slowest join
+    time_statistics = []
+    time_statistics.append(end_time_rec_part - start_time_rec_part)
+    time_statistics.append(end_total_time_distribution - start_total_time_distribution)
+    time_statistics.append(slowest_single_time_distribution)
+    time_statistics.append(end_total_time_join - start_total_time_join)
+    time_statistics.append(slowest_single_time_join)
+
+    #
+    dupl_statistics = []
+    dupl_statistics.append(sample_size)
+    dupl_statistics.append(total_input)
+    dupl_statistics.append(overhead_input_dupl)
+    dupl_statistics.append(nr_w*size)
+    dupl_statistics.append(nr_w*size*(overhead_input_dupl+1))
+    dupl_statistics.append(real_input)
+    dupl_statistics.append((real_input-nr_w*size)/(nr_w*size))
+    dupl_statistics.append(len(output))
+
+    #
+    load_statistics = []
+    load_statistics.append(l_zero)
+    load_statistics.append(l_max)
+    load_statistics.append(overhead_worker_load)
+    load_statistics.append(min_real_workload_per_machine)
+    load_statistics.append(workload_of_worst_machine)
+    load_statistics.append((workload_of_worst_machine-min_real_workload_per_machine)/min_real_workload_per_machine)
+    statistics = (time_statistics, dupl_statistics, load_statistics)
+
+    return output, statistics
 
 
-    print("-----")
-    print("Min input: " + str(k))
-    print("total input:" + str(total_input))
-    print("input overhead: " + str(overhead_input_dupl))
-    print("---load")
-    print("min workload per machine: " + str(l_zero))
-    print("workload of worst machine: " + str(l_max))
-    print("workload overhead: " + str(overhead_worker_load))
-    print("input before dupl:" + str(nr_w*3000))
-    print("real input:" + str(real_input))
-    print(len(output))
+
+
+
+if __name__ == '__main__':
+
+    band_condition = [2, 2, 2]      #band join predicate
+    nr_w = 5                        #number of workers
+    sample_size = 500               #sample size (best to choose something divisible by nr_w)
+    size = 2000                     #size of tables per Database (dbs are filled up to 10'000 at the moment)
+
+    output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
+
+
+    #CALCULATRE/SHOW SOME TIME STATISTICS
+    print("---time statistics")
+    print("Duration rec part: ", precisedelta(timedelta(seconds=statistics[0][0])))
+    print("Total time distribution: ", precisedelta(timedelta(seconds=statistics[0][1])))
+    print("Slowest time single distribution: ", precisedelta(timedelta(seconds=statistics[0][2])))
+    print("Total time join: ", precisedelta(timedelta(seconds=statistics[0][3])))
+    print("Slowest time single join: ", precisedelta(timedelta(seconds=statistics[0][4])))
+
+    print("---duplication statistics")
+    print("Sample input before duplication: " + str(statistics[1][0]))
+    print("Total sample input after duplication:" + str(statistics[1][1]))
+    print("Estimated Input overhead: " + str(statistics[1][2]))
+    print("Real Input before duplication:" + str(statistics[1][3]))
+    print("Estimated Input after duplication:" + str(statistics[1][4]))
+    print("Real Input after duplication:" + str(statistics[1][5]))
+    print("Real Input overhead: " + str(statistics[1][6]))
+    print("Output size:" + str(statistics[1][7]))
+
+    print("---load statistics")
+    print("lower bound workload per machine: " + str(statistics[2][0]))
+    print("workload of worst machine: " + str(statistics[2][1]))
+    print("Estimated workload overhead: " + str(statistics[2][2]))
+    print("real lower bound workload per machine: " + str(statistics[2][3]))
+    print("real workload of worst machine: " + str(statistics[2][4]))
+    print("real workload overhead: " + str(statistics[2][5]))
+
 
     #draws only the first 2 dimensions of the partitions, mighjt look strange
 
