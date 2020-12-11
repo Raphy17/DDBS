@@ -25,7 +25,7 @@ for sample_size in range(100, 10000, 100):
     Time = 0
     dupl_overhead = 0
     workload_overhead =  0
-    for i in range(3):
+    for i in range(1):
         random_sample_S = construct_pareto_data(sample_size // 2, 1.5, 0, len(band_condition))
         random_sample_T = construct_pareto_data(sample_size // 2, 1.5, 1, len(band_condition))
         start_time_rec_part = time.time()
@@ -34,8 +34,9 @@ for sample_size in range(100, 10000, 100):
         Time += end_time_rec_part-start_time_rec_part
         dupl_overhead += statistics[3]
         workload_overhead += statistics[4]
-    all_statistics.append((sample_size, Time/3, dupl_overhead/3, workload_overhead/3))
+    all_statistics.append((sample_size, Time, dupl_overhead, workload_overhead))
     print(sample_size)
+    print(all_statistics)
 
 # def write_csv_file(file, results):
 #     with open(file, "w") as f:
