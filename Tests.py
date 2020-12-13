@@ -44,7 +44,7 @@ def run_tests_on_coordinator(name):
         all_statistics.append(statistics)
     write_csv_file_coordinator(name+".csv", all_statistics)
     read_file = pd.read_csv(name+".csv")
-    read_file.to_excel(name+"xlsx", index=None, header=True)
+    read_file.to_excel(name+".xlsx", index=None, header=True)
 
 def run_tests_on_recPart(name):
     all_statistics = []

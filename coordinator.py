@@ -2,8 +2,8 @@ import time
 from humanize import precisedelta
 from datetime import timedelta
 
-from DDBS.recPart import *
-from DDBS.worker import *
+from recPart import *
+from worker import *
 
 
 def get_regions(regions, region, s_e, d):
