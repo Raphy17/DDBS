@@ -29,6 +29,7 @@ class Partition:  # tuple structure: the for the join necessary dimensions at th
         else:
             return "{}sub:{}".format(self.A, self.sub_partitions)
 
+    # split-scoring part of recPart algorithm
     def find_best_split(self, partitions, band_condition, w):
         valid_dims = self.get_valid_dims(band_condition)
         best_split = 0
@@ -77,7 +78,7 @@ class Partition:  # tuple structure: the for the join necessary dimensions at th
             if self.top_score > 0:
                 return self.best_split, self.top_score, self.dim_best_split, self.delta_dupl_best_split
 
-        #1 bucket if dimensions are to small or no regular topscore has value > 0
+        # turn partition into small partition for 1-bucket if all dimensions too small or score < 0 for all dimensions
         delta_Dupl = self.duplication_caused_by_small_partitioning()  #array with the delta_dupl causes when increasing number of splits in a dimension by 1 (e.g. increasing rows from 1 to 2
         delta_Var = self.delta_Var_caused_by_small_partitioning()
         sigma_dim = []
@@ -295,7 +296,7 @@ def compute_output(S, T, band_conditions):
                 output.append((s_element, t_element))
     return output
 
-#Main part of recPart algorithm
+# Main part of recPart algorithm
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for
 
 
