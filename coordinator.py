@@ -181,11 +181,14 @@ if __name__ == '__main__':
     # let this file run if you want to test the full join
     # choose nr of workers, join_size sample_size, bandcondition (dimensionality gets figured out dynamically) and distribution
 
-    nr_w = 5                       #number of workers
+    # note: with small join_size the variance in overhead is really big, this can lead to extremely good or bad overheads
+    nr_w = 5                        #number of workers
     join_size = 10000               #size of the join (should be divisible by nr_w
     size = join_size//nr_w          #size of table of the ind. dbs's
-    sample_size = 500              #sample size (best to choose something divisible by nr_w)
-    band_condition = [2, 2, 2]      #band join predicate
+    sample_size = 500               #sample size (best if divisible by nr_w)
+    band_condition = [2, 2, 2]      #band-join condition (dimensionality gets figured out dynamically)
+
+
 
     output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
 

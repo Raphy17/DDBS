@@ -384,7 +384,7 @@ if __name__ == '__main__':
 
     w = 5                       # nr of workers
     k = 500                     # sample size (best if divisible by nr_w)
-    band_condition = [2, 2]     # and condition
+    band_condition = [2, 2]     # band-join condition (dimensionality gets figured out dynamically)
     # choose distribution: pareto(2.parameter is z value, can be changed), uniform or normal
     random_sample_S = construct_pareto_data(k // 2, 1.5, 0, len(band_condition))      # size, z, S/T, dim
     random_sample_T = construct_pareto_data(k // 2, 1.5, 1, len(band_condition))
