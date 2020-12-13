@@ -184,7 +184,7 @@ if __name__ == '__main__':
     nr_w = 5                       #number of workers
     join_size = 10000               #size of the join (should be divisible by nr_w
     size = join_size//nr_w          #size of table of the ind. dbs's
-    sample_size = 1000              #sample size (best to choose something divisible by nr_w)
+    sample_size = 500              #sample size (best to choose something divisible by nr_w)
     band_condition = [2, 2, 2]      #band join predicate
 
     output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
@@ -193,9 +193,9 @@ if __name__ == '__main__':
     #CALCULATRE/SHOW SOME TIME STATISTICS
     print("---time statistics")
     print("Duration rec part: ", precisedelta(timedelta(seconds=statistics[0][0])))
-    print("Total time distribution: ", precisedelta(timedelta(seconds=statistics[0][1])))
+    # print("Total time distribution: ", precisedelta(timedelta(seconds=statistics[0][1])))
     print("Slowest time single distribution: ", precisedelta(timedelta(seconds=statistics[0][2])))
-    print("Total time join: ", precisedelta(timedelta(seconds=statistics[0][3])))
+    # print("Total time join: ", precisedelta(timedelta(seconds=statistics[0][3])))
     print("Slowest time single join: ", precisedelta(timedelta(seconds=statistics[0][4])))
     print("Total time: ", precisedelta(timedelta(seconds=statistics[0][5])))
     print("Percentage of time spent in recPart: ", statistics[0][6])
@@ -203,19 +203,19 @@ if __name__ == '__main__':
     print("---duplication statistics")
     print("Sample input before duplication: " + str(statistics[1][0]))
     print("Total sample input after duplication:" + str(statistics[1][1]))
-    print("Estimated Input overhead: " + str(statistics[1][2]))
     print("Real Input before duplication:" + str(statistics[1][3]))
     print("Estimated Input after duplication:" + str(statistics[1][4]))
     print("Real Input after duplication:" + str(statistics[1][5]))
+    print("Estimated Input overhead: " + str(statistics[1][2]))
     print("Real Input overhead: " + str(statistics[1][6]))
-    print("Output size:" + str(statistics[1][7]))
+    print("Output size :" + str(statistics[1][7]))
 
-    print("---load statistics")
-    print("lower bound workload per machine: " + str(statistics[2][0]))
-    print("workload of worst machine: " + str(statistics[2][1]))
+    print("---workload statistics")
+    # print("lower bound workload per machine: " + str(statistics[2][0]))
+    # print("workload of worst machine: " + str(statistics[2][1]))
     print("Estimated workload overhead: " + str(statistics[2][2]))
-    print("real lower bound workload per machine: " + str(statistics[2][3]))
-    print("real workload of worst machine: " + str(statistics[2][4]))
+    # print("real lower bound workload per machine: " + str(statistics[2][3]))
+    # print("real workload of worst machine: " + str(statistics[2][4]))
     print("real workload overhead: " + str(statistics[2][5]))
 
 

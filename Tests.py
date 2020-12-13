@@ -36,21 +36,21 @@ def write_csv_file_recPart(file, results):
 def run_tests_on_coordinator(name):
     all_statistics = []
     for input_size in range(1000, 1500, 200):
-        band_condition = [2, 2, 2]      #band join predicate
-        nr_w = 5                        #number of workers
-        sample_size = input_size//20               #sample size (best to choose something divisible by nr_w)
-        size = input_size//nr_w                     #size of table per Database (first 5 dbs are fille up to 20'000 at the moment, last 5 up to 10'000)
+        band_condition = [2, 2, 2]      # band-condition
+        nr_w = 5                        # nr of workers
+        sample_size = input_size//20    # sample size (best to choose something divisible by nr_w)
+        size = input_size//nr_w         # size of table per Database
         output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
         all_statistics.append(statistics)
-    write_csv_file_coordinator(name, all_statistics)
-    read_file = pd.read_csv(name)
-    read_file.to_excel(name, index=None, header=True)
+    write_csv_file_coordinator(name+".csv", all_statistics)
+    read_file = pd.read_csv(name+".csv")
+    read_file.to_excel(name+"xlsx", index=None, header=True)
 
 def run_tests_on_recPart(name):
     all_statistics = []
     for sample_size in range(100, 400, 100):
-        w = 5                       #nr of workers
-        band_condition = [2, 2, 2]     #band condition
+        w = 5                           # nr of workers
+        band_condition = [2, 2, 2]      # band-condition
         Time = 0
         dupl_overhead = 0
         workload_overhead =  0
@@ -64,11 +64,13 @@ def run_tests_on_recPart(name):
             dupl_overhead += statistics[3]
             workload_overhead += statistics[4]
         all_statistics.append((sample_size, Time, dupl_overhead, workload_overhead))
-    write_csv_file_recPart(name, all_statistics)
-    read_file = pd.read_csv(name)
-    read_file.to_excel(name, index=None, header=True)
+    write_csv_file_recPart(name+".csv", all_statistics)
+    read_file = pd.read_csv(name+".csv")
+    read_file.to_excel(name+".xlsx", index=None, header=True)
 
-run_tests_on_coordinator("Results1.csv")
-run_tests_on_recPart("Results2.csv")
-#make excel file
+# if you want to test on different input/sample sizes
+# change nr_w, band_condition, sample/input_size range in the respective function
+run_tests_on_coordinator("NewResults1")
+run_tests_on_recPart("NewResults2")
+
 
