@@ -178,11 +178,14 @@ def coordinate_join(band_condition, nr_w, sample_size, size):
 
 
 if __name__ == '__main__':
+    # let this file run if you want to test the full join
+    # choose nr of workers, join_size sample_size, bandcondition (dimensionality gets figured out dynamically) and distribution
 
+    nr_w = 5                       #number of workers
+    join_size = 10000               #size of the join (should be divisible by nr_w
+    size = join_size//nr_w          #size of table of the ind. dbs's
+    sample_size = 1000              #sample size (best to choose something divisible by nr_w)
     band_condition = [2, 2, 2]      #band join predicate
-    nr_w = 10                        #number of workers
-    sample_size = 1000               #sample size (best to choose something divisible by nr_w)
-    size = 2000                     #size of table per Database (first 5 dbs are fille up to 20'000 at the moment, last 5 up to 10'000)
 
     output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
 
@@ -215,7 +218,5 @@ if __name__ == '__main__':
     print("real workload of worst machine: " + str(statistics[2][4]))
     print("real workload overhead: " + str(statistics[2][5]))
 
-
-    #draws only the first 2 dimensions of the partitions, mighjt look strange
 
 

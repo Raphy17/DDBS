@@ -4,7 +4,6 @@ from bokeh.models import ColumnDataSource, Line, HoverTool, FactorRange
 import bokeh.palettes as bp
 
 def draw_partitions(S, T, parts):
-    print(len(parts))
     p = figure(plot_width=1000, plot_height=600)
     count = 1
     colors = bp.viridis(len(parts)+1)

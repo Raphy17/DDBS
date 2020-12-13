@@ -46,7 +46,7 @@ class Partition:  # tuple structure: the for the join necessary dimensions at th
                 self.sample_input.sort(key=lambda x: x[dim])  # sort input_sample on dimension A
                 for i in range(0, len(self.sample_input) - 1):  # find best split a single dimension
                     x = (self.sample_input[i][dim] + self.sample_input[i + 1][dim]) / 2
-                    if not (self.A[dim][0] + band_condition[dim]/3 < x < self.A[dim][1] - band_condition[dim]/3):
+                    if not (self.A[dim][0] < x < self.A[dim][1]):
                         continue
                     delta_dup_x = find_dupl(self.sample_input, i, band_condition[dim], dim)
                     Vp_new = Vp - (w - 1) / w ** 2 * (self.get_load()[0] ** 2)
@@ -295,7 +295,7 @@ def compute_output(S, T, band_conditions):
                 output.append((s_element, t_element))
     return output
 
-
+#Main part of recPart algorithm
 def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-join-dimension e.g. (10, 100, 100) for
 
 
@@ -303,7 +303,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     random_sample_T = T
 
     random_output_sample = compute_output(random_sample_S, random_sample_T, band_condition)
-    print("random output sample:" + str(len(random_output_sample)))
+    print("random output sample size:" + str(len(random_output_sample)))
 
     partitions = []         # all partitions
     A = []          #compute initial domain dynamically
@@ -379,16 +379,20 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
 
 if __name__ == '__main__':
-    w = 5                       #nr of workers
-    k = 2000               #sample size
-    band_condition = [2, 2]     #band condition
-    #choose distribution: pareto, uniform or normal
-    random_sample_S = construct_pareto_data(k // 2, 1.5, 0, len(band_condition))      #size, z, S/T, dim
+    # let this file run if you want to test only the recPart part of the algorithm
+    # choose nr of workers, sample_size, band-condition (dimensionality gets figured out dynamically) and distribution
+
+    w = 5                       # nr of workers
+    k = 500                     # sample size (best if divisible by nr_w)
+    band_condition = [2, 2]     # and condition
+    # choose distribution: pareto(2.parameter is z value, can be changed), uniform or normal
+    random_sample_S = construct_pareto_data(k // 2, 1.5, 0, len(band_condition))      # size, z, S/T, dim
     random_sample_T = construct_pareto_data(k // 2, 1.5, 1, len(band_condition))
     # random_sample_S = construct_uniform_data(k // 2, 0)
     # random_sample_T = construct_uniform_data(k // 2, 1)
-    # random_sample_S = construct_normal_data(k // 2, 50, 15, 0, len(band_condition))                          #size, mu, sigma, S/T, dim
+    # random_sample_S = construct_normal_data(k // 2, 50, 15, 0, len(band_condition)) # size, mu, sigma, S/T, dim
     # random_sample_T = construct_normal_data(k // 2, 50, 15, 1, len(band_condition))
+
 
     best_partitioning, statistics = recPart(random_sample_S, random_sample_T, band_condition, k, w)
     parts, total_input, l_max, overhead_input_dupl, overhead_worker_load, l_zero, over_head_history = statistics
@@ -401,7 +405,7 @@ if __name__ == '__main__':
     print("min worker load per machine: " + str(l_zero))
     print("worker load of worst machine: " + str(l_max))
     print("worker load overhead: " + str(overhead_worker_load))
-    print(over_head_history)
+    #print(over_head_history)
 
     draw_partitions(random_sample_S, random_sample_T, parts)
 
