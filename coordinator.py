@@ -61,11 +61,11 @@ def create_workers(nr_w, size):
     return workers
 
 
-def get_input_sample_from_workers(workers, sample_size):
+def get_input_sample_from_workers(workers, sample_size, table_name):
     S = []
     T = []
     for w in workers:
-        ts = w.get_sample("table_pareto15", sample_size // len(workers))
+        ts = w.get_sample(table_name, sample_size // len(workers))
         for t in ts:
             if t[-1] == 0:
                 S.append(t)
@@ -86,7 +86,7 @@ def distribute_partitions(loads, w):
         partition_to_worker[p[0]] = worker
     return partition_to_worker
 
-def coordinate_join(band_condition, nr_w, sample_size, size):
+def coordinate_join(band_condition, nr_w, sample_size, size, table_name):
 
     #creating a worker for each Database
     workers = create_workers(nr_w, size)
@@ -94,7 +94,7 @@ def coordinate_join(band_condition, nr_w, sample_size, size):
     start_time_rec_part = time.time()
 
     # Getting input sample for recPart algorithm from workers
-    S, T = get_input_sample_from_workers(workers, sample_size)
+    S, T = get_input_sample_from_workers(workers, sample_size, table_name)
 
     best_partitioning, recPart_statistics = recPart(S, T, band_condition, sample_size, nr_w)
     partitioning, loads = transform_recPart_into_partitioning(best_partitioning)
@@ -110,7 +110,7 @@ def coordinate_join(band_condition, nr_w, sample_size, size):
     single_time_distributions = []
     for w in workers:
         start_single_time_distribution = time.time()
-        w.distribute_tuples("table_pareto15", workers, p_to_w, partitioning, len(band_condition), band_condition)
+        w.distribute_tuples(table_name, workers, p_to_w, partitioning, len(band_condition), band_condition)
         end_single_time_distribution = time.time()
         single_time_distributions.append(end_single_time_distribution-start_single_time_distribution)
 
@@ -187,10 +187,14 @@ if __name__ == '__main__':
     size = join_size//nr_w          #size of table of the ind. dbs's
     sample_size = 500               #sample size (best if divisible by nr_w)
     band_condition = [2, 2, 2]      #band-join condition (dimensionality gets figured out dynamically)
+    table_name = "table_pareto15"   # choose distribution
+    # table_name = "table_pareto05"
+    # table_name = "table_uniform"
 
 
 
-    output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
+
+    output, statistics = coordinate_join(band_condition, nr_w, sample_size, size, table_name)
 
 
     #CALCULATRE/SHOW SOME TIME STATISTICS

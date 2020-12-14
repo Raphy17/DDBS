@@ -40,7 +40,7 @@ def run_tests_on_coordinator(name):
         nr_w = 5                        # nr of workers
         sample_size = input_size//20    # sample size (best to choose something divisible by nr_w)
         size = input_size//nr_w         # size of table per Database
-        output, statistics = coordinate_join(band_condition, nr_w, sample_size, size)
+        output, statistics = coordinate_join(band_condition, nr_w, sample_size, size, "table_pareto15")
         all_statistics.append(statistics)
     write_csv_file_coordinator(name+".csv", all_statistics)
     read_file = pd.read_csv(name+".csv")
@@ -68,9 +68,10 @@ def run_tests_on_recPart(name):
     read_file = pd.read_csv(name+".csv")
     read_file.to_excel(name+".xlsx", index=None, header=True)
 
-# if you want to test on different input/sample sizes
-# change nr_w, band_condition, sample/input_size range in the respective function
-run_tests_on_coordinator("NewResults1")
-run_tests_on_recPart("NewResults2")
+if __name__ == '__main__':
+    # if you want to test on different input/sample sizes
+    # change nr_w, band_condition, sample/input_size range in the respective function
+    run_tests_on_coordinator("NewResults1")
+    run_tests_on_recPart("NewResults2")
 
 
