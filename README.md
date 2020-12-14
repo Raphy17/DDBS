@@ -10,12 +10,12 @@ It is recommended that you install required packages in a new virtulenv from `re
 ## Running code
 There are 3 main files you can run
 
-recPart: Let this run if you want to compute the partitioning
+`recPart.py`: Let this run if you want to compute the partitioning
 
 Computes a partitioning based on the recPart algorithm by Li, Rundong, et al.
 You can adjust number of workers, sample_size, band_condition and distribution being used.
 
-coordinator: Let this run if you want to compute a full-join
+`coordinator.py`: Let this run if you want to compute a full-join
 
 First collects an input sample from the DBS's, then uses recPart to find best partitioning and finally computes the full band-join based on that partitioning.
 You can adjust number of workers, join_siz, sample_size, band_condition and distribution being used. 
@@ -23,5 +23,5 @@ The maximum size for the first 5 workers is 20'000 tuples and for the rest 10'00
 
 
 
-Tests: Let this run if you want to test coordinator or recPart on a range of different inputs and automatically 
+`Tests.py`: Let this run if you want to test coordinator or recPart on a range of different inputs and automatically 
 protocol the results in an excel file.
