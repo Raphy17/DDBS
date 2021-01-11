@@ -55,7 +55,7 @@ class Partition:  # tuple structure: the for the join necessary dimensions at th
                         len(self.sample_input) - 1 - i + delta_dup_x, (self.get_output_size()/self.get_input_size())*(len(self.sample_input) - 1 - i), 4,
                         1) ** 2) #removed duplication from adding to variance, since it's ambiguous in paper
                     delta_var_x = Vp - Vp_new
-                    rev = 0
+                    rev = 0         #here to compensate imaginary duplication cause by< setting delta_dupl_x to 1 despite it being 0
                     if delta_dup_x == 0:
                         delta_dup_x = 1
                         rev = 1
@@ -307,7 +307,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     print("random output sample size:" + str(len(random_output_sample)))
 
     partitions = []         # all partitions
-    A = []          #compute initial domain dynamically
+    A = []          # compute initial domain dynamically
     for dim in range(len(band_condition)):  #len(band_conditions) == number of dimensions
         A.append((1, max(random_sample_S+random_sample_T, key=lambda item:item[dim])[dim]))     #change 1 to 0 for uniform&normal
 
@@ -325,9 +325,9 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
 
     all_partitions = []
     all_partitions.append(partitions.copy())
-    overhead_history = []
+    overhead_history = [] #used to deliver best partition in the end
     overhead_history.append(max(overhead_input_dupl, overhead_worker_load))
-    full_overhead_history = []
+    full_overhead_history = [] #used for statistics
     full_overhead_history.append((overhead_input_dupl, overhead_worker_load))
 
     termination_condition = True
@@ -335,7 +335,7 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
     while termination_condition:
         p_max = find_top_score_partition(partitions)
         if p_max is None:
-            print("p_max ios None")
+            print("p_max is None")
             break
         total_input += p_max.get_dupl_caused_by_split()
         if p_max.regular_partition:
@@ -357,8 +357,8 @@ def recPart(S, T, band_condition, k, w):  # condition = epsilon for each band-jo
         overhead_input_dupl = (total_input - k) / k
 
 
-        full_overhead_history.append((overhead_input_dupl, overhead_worker_load))       #jsut to collect data
-        overhead_history.append(max(overhead_input_dupl, overhead_worker_load))
+        full_overhead_history.append((overhead_input_dupl, overhead_worker_load))       #just to collect data
+        overhead_history.append(max(overhead_input_dupl, overhead_worker_load))         #used to find best partitioning in the end
 
         if overhead_input_dupl > overhead_worker_load:
             termination_condition = False
